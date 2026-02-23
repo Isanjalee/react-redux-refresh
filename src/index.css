@@ -1,0 +1,159 @@
+:root {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: #111;
+  background: #f6f7fb;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.page {
+  max-width: 860px;
+  margin: 40px auto;
+  padding: 0 16px;
+}
+
+.header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+}
+
+.subtitle {
+  margin: 6px 0 0;
+  color: #444;
+}
+
+.card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+}
+
+.footer {
+  margin-top: 14px;
+  color: #666;
+  font-size: 14px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.field { flex: 1; }
+
+.input {
+  width: 100%;
+  padding: 12px 12px;
+  border-radius: 12px;
+  border: 1px solid #d6d8e0;
+  outline: none;
+  font-size: 15px;
+}
+
+.input:focus {
+  border-color: #6b7cff;
+}
+
+.input-error {
+  border-color: #e04b4b;
+}
+
+.error {
+  margin-top: 6px;
+  color: #e04b4b;
+  font-size: 13px;
+}
+
+.filters {
+  display: flex;
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.chip {
+  border: 1px solid #d6d8e0;
+  background: #fff;
+  padding: 8px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.chip-active {
+  border-color: #6b7cff;
+  background: #eef0ff;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.item-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.item-title { font-size: 15px; }
+
+.item-done {
+  text-decoration: line-through;
+  color: #777;
+}
+
+.empty {
+  padding: 18px 10px;
+  color: #666;
+}
+
+.btn {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #d6d8e0;
+  background: #111;
+  color: #fff;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #fff;
+  color: #111;
+}
+
+.btn-danger {
+  background: #fff;
+  color: #e04b4b;
+  border-color: #f2b7b7;
+}
