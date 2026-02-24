@@ -74,7 +74,7 @@ Architecture style: **Feature-Based Structure**
 
 ---
 
-# ✨ Features Implemented (Day 1 & Day 2)
+# ✨ Features Implemented
 
 ## Day 1
 
