@@ -1,5 +1,6 @@
-import classNames from "classnames";
+import React from "react";
 import type { Task } from "../types";
+import Button from "../../../shared/components/Button";
 
 type Props = {
   task: Task;
@@ -7,24 +8,35 @@ type Props = {
   onDelete: (id: string) => void;
 };
 
-export default function TaskItem({ task, onToggle, onDelete }: Props) {
+const TaskItem = React.memo(function TaskItem({
+  task,
+  onToggle,
+  onDelete,
+}: Props) {
   return (
-    <li className="item">
-      <label className="item-left">
+    <li className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 hover:bg-gray-100 transition">
+      <label className="flex items-center gap-3">
         <input
           type="checkbox"
           checked={task.completed}
           onChange={() => onToggle(task.id)}
-          aria-label={`Mark ${task.title} as ${task.completed ? "not completed" : "completed"}`}
+          className="h-4 w-4"
         />
-        <span className={classNames("item-title", task.completed && "item-done")}>
+
+        <span
+          className={`text-sm ${
+            task.completed ? "line-through text-gray-500" : "text-gray-900"
+          }`}
+        >
           {task.title}
         </span>
       </label>
 
-      <button className="btn btn-danger" onClick={() => onDelete(task.id)} type="button">
+      <Button variant="danger" onClick={() => onDelete(task.id)} type="button">
         Delete
-      </button>
+      </Button>
     </li>
   );
-}
+});
+
+export default TaskItem;

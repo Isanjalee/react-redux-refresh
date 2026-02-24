@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Button from "../../../shared/components/Button";
 
 type Props = {
   onAdd: (title: string) => void;
@@ -22,22 +23,28 @@ export default function TaskForm({ onAdd }: Props) {
   }
 
   return (
-    <form className="row" onSubmit={submit}>
-      <div className="field">
+    <form onSubmit={submit} className="flex gap-3">
+      <div className="flex-1">
         <input
-          className={`input ${showError ? "input-error" : ""}`}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={() => setTouched(true)}
-          placeholder="Add a task (e.g., Revise useEffect)"
-          aria-label="Task title"
+          placeholder="Add a task..."
+          className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition ${
+            showError
+              ? "border-red-400 focus:border-red-500"
+              : "border-gray-300 focus:border-black"
+          }`}
         />
-        {showError && <div className="error">Task title cannot be empty.</div>}
+
+        {showError && (
+          <p className="mt-2 text-xs text-red-600">
+            Task title cannot be empty
+          </p>
+        )}
       </div>
 
-      <button className="btn" type="submit">
-        Add
-      </button>
+      <Button type="submit">Add</Button>
     </form>
   );
 }
