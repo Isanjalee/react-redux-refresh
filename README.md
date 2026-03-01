@@ -96,6 +96,20 @@ Architecture style: **Feature-Based Structure**
 * Improved feature-based architecture
 * Performance optimization techniques
 
+## Day 3
+
+* Redux Toolkit integration
+* Global state management with centralized store
+* Feature slice implementation (tasksSlice)
+* Action creators and reducers using createSlice
+* Typed Redux hooks (useAppDispatch, useAppSelector)
+* State persistence via localStorage (Redux-level handling)
+* Selective state subscription using useSelector
+* Unidirectional data flow architecture
+* Separation of UI layer and state management layer
+* Understanding internal Redux flow (dispatch → reducer → state → re-render)
+* Introduction to Immer-based immutable updates
+
 ---
 
 # 🧠 Performance Techniques Used
@@ -187,10 +201,11 @@ Currently completed:
 
 * Day 1 ✅
 * Day 2 ✅
+* Day 3 ✅
 
 Next:
 
-* Day 3: Redux Toolkit Integration 🚀
+* Day 4 Full Implementation (Async Thunk version)
 
 ---
 
