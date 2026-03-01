@@ -1,19 +1,24 @@
-import { useCallback, useMemo, useState } from "react";
-import type { Task, TaskFilter } from "./types";
-import { filterTasks, makeId } from "./taskUtils";
+import { useMemo, useCallback } from "react";
 import TaskForm from "./components/TaskForm";
 import TaskFilters from "./components/TaskFilters";
 import TaskList from "./components/TaskList";
-import { useLocalStorageState } from "../../shared/hooks/useLocalStorageState";
 import Button from "../../shared/components/Button";
 
-export default function TasksPage() {
-  const [tasks, setTasks] = useLocalStorageState<Task[]>(
-    "rr_refresh_tasks_v2",
-    [],
-  );
+import { filterTasks } from "./taskUtils";
+import { useAppDispatch, useAppSelector } from "../../app/hooks";
+import {
+  addTask,
+  toggleTask,
+  deleteTask,
+  clearCompleted,
+  setFilter,
+} from "./tasksSlice";
 
-  const [filter, setFilter] = useState<TaskFilter>("all");
+export default function TasksPage() {
+  const dispatch = useAppDispatch();
+
+  const tasks = useAppSelector((s: any) => s.tasks.items);
+  const filter = useAppSelector((s: any) => s.tasks.filter);
 
   const visibleTasks = useMemo(
     () => filterTasks(tasks, filter),
@@ -31,47 +36,34 @@ export default function TasksPage() {
     };
   }, [tasks]);
 
-  const addTask = useCallback(
+  const onAdd = useCallback(
     (title: string) => {
-      const trimmed = title.trim();
-      if (!trimmed) return;
-
-      const newTask: Task = {
-        id: makeId(),
-        title: trimmed,
-        completed: false,
-        createdAt: Date.now(),
-      };
-
-      setTasks((prev) => [newTask, ...prev]);
+      dispatch(addTask({ title }));
     },
-    [setTasks],
+    [dispatch],
   );
 
-  const toggleTask = useCallback(
+  const onToggle = useCallback(
     (id: string) => {
-      setTasks((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)),
-      );
+      dispatch(toggleTask({ id }));
     },
-    [setTasks],
+    [dispatch],
   );
 
-  const deleteTask = useCallback(
+  const onDelete = useCallback(
     (id: string) => {
-      setTasks((prev) => prev.filter((t) => t.id !== id));
+      dispatch(deleteTask({ id }));
     },
-    [setTasks],
+    [dispatch],
   );
 
-  const clearCompleted = useCallback(() => {
-    setTasks((prev) => prev.filter((t) => !t.completed));
-  }, [setTasks]);
+  const onClearCompleted = useCallback(() => {
+    dispatch(clearCompleted());
+  }, [dispatch]);
 
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="mx-auto max-w-3xl px-4 py-12">
-        {/* Header */}
         <header className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
@@ -86,32 +78,34 @@ export default function TasksPage() {
 
           <Button
             variant="secondary"
-            onClick={clearCompleted}
+            onClick={onClearCompleted}
             disabled={stats.completed === 0}
           >
             Clear completed
           </Button>
         </header>
 
-        {/* Card */}
         <main className="mt-8 rounded-2xl bg-white p-6 shadow-md">
-          <TaskForm onAdd={addTask} />
+          <TaskForm onAdd={onAdd} />
 
           <div className="mt-6">
-            <TaskFilters value={filter} onChange={setFilter} />
+            <TaskFilters
+              value={filter}
+              onChange={(f) => dispatch(setFilter({ filter: f }))}
+            />
           </div>
 
           <div className="mt-6">
             <TaskList
               tasks={visibleTasks}
-              onToggle={toggleTask}
-              onDelete={deleteTask}
+              onToggle={onToggle}
+              onDelete={onDelete}
             />
           </div>
         </main>
 
         <footer className="mt-6 text-sm text-gray-500">
-          Day 2 focus: custom hooks, memoization, reusable components.
+          Day 3 focus: Redux Toolkit (slice, store, typed hooks, selectors).
         </footer>
       </div>
     </div>
