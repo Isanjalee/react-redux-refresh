@@ -3,9 +3,10 @@ import Button from "../../../shared/components/Button";
 
 type Props = {
   onAdd: (title: string) => void;
+  disabled?: boolean;
 };
 
-export default function TaskForm({ onAdd }: Props) {
+export default function TaskForm({ onAdd, disabled = false }: Props) {
   const [title, setTitle] = useState("");
   const [touched, setTouched] = useState(false);
 
@@ -29,6 +30,7 @@ export default function TaskForm({ onAdd }: Props) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={() => setTouched(true)}
+          disabled={disabled}
           placeholder="Add a task..."
           className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition ${
             showError
@@ -44,7 +46,9 @@ export default function TaskForm({ onAdd }: Props) {
         )}
       </div>
 
-      <Button type="submit">Add</Button>
+      <Button type="submit" disabled={disabled}>
+        Add
+      </Button>
     </form>
   );
 }

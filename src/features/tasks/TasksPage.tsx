@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import TaskForm from "./components/TaskForm";
 import TaskFilters from "./components/TaskFilters";
 import TaskList from "./components/TaskList";
@@ -8,6 +8,10 @@ import {
   addTask,
   clearCompleted,
   deleteTask,
+  fetchTasks,
+  selectHasLoadedTasks,
+  selectIsTasksBusy,
+  selectTaskError,
   selectTaskFilter,
   selectTaskStats,
   selectVisibleTasks,
@@ -20,6 +24,15 @@ export default function TasksPage() {
   const filter = useAppSelector(selectTaskFilter);
   const visibleTasks = useAppSelector(selectVisibleTasks);
   const stats = useAppSelector(selectTaskStats);
+  const isBusy = useAppSelector(selectIsTasksBusy);
+  const error = useAppSelector(selectTaskError);
+  const hasLoaded = useAppSelector(selectHasLoadedTasks);
+
+  useEffect(() => {
+    if (!hasLoaded) {
+      dispatch(fetchTasks());
+    }
+  }, [dispatch, hasLoaded]);
 
   const onAdd = useCallback(
     (title: string) => {
@@ -53,13 +66,15 @@ export default function TasksPage() {
     [dispatch],
   );
 
+  const showInitialLoading = isBusy && !hasLoaded;
+
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="mx-auto max-w-3xl px-4 py-12">
         <header className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              React Refresh - Tasks MVP
+              React Refresh - Tasks Day 4
             </h1>
 
             <p className="mt-2 text-sm text-gray-600">
@@ -71,30 +86,47 @@ export default function TasksPage() {
           <Button
             variant="secondary"
             onClick={onClearCompleted}
-            disabled={stats.completed === 0}
+            disabled={stats.completed === 0 || isBusy}
           >
             Clear completed
           </Button>
         </header>
 
         <main className="mt-8 rounded-2xl bg-white p-6 shadow-md">
-          <TaskForm onAdd={onAdd} />
+          <TaskForm onAdd={onAdd} disabled={isBusy} />
 
           <div className="mt-6">
-            <TaskFilters value={filter} onChange={onFilterChange} />
+            <TaskFilters
+              value={filter}
+              onChange={onFilterChange}
+              disabled={isBusy}
+            />
           </div>
 
+          {error && (
+            <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
           <div className="mt-6">
-            <TaskList
-              tasks={visibleTasks}
-              onToggle={onToggle}
-              onDelete={onDelete}
-            />
+            {showInitialLoading ? (
+              <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm text-gray-500">
+                Loading tasks...
+              </div>
+            ) : (
+              <TaskList
+                tasks={visibleTasks}
+                onToggle={onToggle}
+                onDelete={onDelete}
+                disabled={isBusy}
+              />
+            )}
           </div>
         </main>
 
         <footer className="mt-6 text-sm text-gray-500">
-          Day 3 focus: Redux Toolkit (slice, store, typed hooks, selectors).
+          Day 4 focus: async thunks, request state, and UI feedback.
         </footer>
       </div>
     </div>

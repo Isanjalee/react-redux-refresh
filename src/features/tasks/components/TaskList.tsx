@@ -5,9 +5,15 @@ type Props = {
   tasks: Task[];
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
+  disabled?: boolean;
 };
 
-export default function TaskList({ tasks, onToggle, onDelete }: Props) {
+export default function TaskList({
+  tasks,
+  onToggle,
+  onDelete,
+  disabled = false,
+}: Props) {
   if (tasks.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm text-gray-500">
@@ -24,6 +30,7 @@ export default function TaskList({ tasks, onToggle, onDelete }: Props) {
           task={task}
           onToggle={onToggle}
           onDelete={onDelete}
+          disabled={disabled}
         />
       ))}
     </ul>

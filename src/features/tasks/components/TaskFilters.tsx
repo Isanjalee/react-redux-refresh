@@ -3,6 +3,7 @@ import type { TaskFilter } from "../types";
 type Props = {
   value: TaskFilter;
   onChange: (value: TaskFilter) => void;
+  disabled?: boolean;
 };
 
 const filters: { key: TaskFilter; label: string }[] = [
@@ -11,7 +12,11 @@ const filters: { key: TaskFilter; label: string }[] = [
   { key: "completed", label: "Completed" },
 ];
 
-export default function TaskFilters({ value, onChange }: Props) {
+export default function TaskFilters({
+  value,
+  onChange,
+  disabled = false,
+}: Props) {
   return (
     <div className="flex gap-2">
       {filters.map((f) => {
@@ -21,6 +26,7 @@ export default function TaskFilters({ value, onChange }: Props) {
           <button
             key={f.key}
             type="button"
+            disabled={disabled}
             onClick={() => onChange(f.key)}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               active

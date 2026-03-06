@@ -6,12 +6,14 @@ type Props = {
   task: Task;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
+  disabled?: boolean;
 };
 
 const TaskItem = React.memo(function TaskItem({
   task,
   onToggle,
   onDelete,
+  disabled = false,
 }: Props) {
   return (
     <li className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 hover:bg-gray-100 transition">
@@ -19,6 +21,7 @@ const TaskItem = React.memo(function TaskItem({
         <input
           type="checkbox"
           checked={task.completed}
+          disabled={disabled}
           onChange={() => onToggle(task.id)}
           className="h-4 w-4"
         />
@@ -32,7 +35,12 @@ const TaskItem = React.memo(function TaskItem({
         </span>
       </label>
 
-      <Button variant="danger" onClick={() => onDelete(task.id)} type="button">
+      <Button
+        variant="danger"
+        onClick={() => onDelete(task.id)}
+        type="button"
+        disabled={disabled}
+      >
         Delete
       </Button>
     </li>

@@ -1,92 +1,124 @@
-import { createSelector, createSlice } from "@reduxjs/toolkit";
+import {
+  createAsyncThunk,
+  createSelector,
+  createSlice,
+  isAnyOf,
+} from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import type { RootState } from "../../app/store";
-import type { Task, TaskFilter } from "./types";
-import { filterTasks, makeId } from "./taskUtils";
-
-/** LocalStorage key for Redux-persisted tasks */
-const STORAGE_KEY = "rr_refresh_tasks_v3";
-
-/** Load from localStorage */
-function loadTasks(): Task[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (t: any) =>
-        t &&
-        typeof t.id === "string" &&
-        typeof t.title === "string" &&
-        typeof t.completed === "boolean" &&
-        typeof t.createdAt === "number",
-    );
-  } catch {
-    return [];
-  }
-}
-
-/** Save to localStorage */
-function saveTasks(tasks: Task[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-}
+import {
+  clearStoredCompletedTasks,
+  createStoredTask,
+  deleteStoredTask,
+  fetchStoredTasks,
+  toggleStoredTask,
+} from "./storage";
+import { filterTasks } from "./taskUtils";
+import type { Task, TaskFilter, TaskRequestStatus } from "./types";
 
 type TasksState = {
   items: Task[];
   filter: TaskFilter;
+  status: TaskRequestStatus;
+  error: string | null;
+  hasLoaded: boolean;
 };
 
 const initialState: TasksState = {
-  items: loadTasks(),
+  items: [],
   filter: "all",
+  status: "idle",
+  error: null,
+  hasLoaded: false,
 };
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "Task request failed";
+}
+
+export const fetchTasks = createAsyncThunk("tasks/fetchTasks", async () => {
+  return fetchStoredTasks();
+});
+
+export const addTask = createAsyncThunk(
+  "tasks/addTask",
+  async ({ title }: { title: string }) => {
+    return createStoredTask(title);
+  },
+);
+
+export const toggleTask = createAsyncThunk(
+  "tasks/toggleTask",
+  async ({ id }: { id: string }) => {
+    return toggleStoredTask(id);
+  },
+);
+
+export const deleteTask = createAsyncThunk(
+  "tasks/deleteTask",
+  async ({ id }: { id: string }) => {
+    return deleteStoredTask(id);
+  },
+);
+
+export const clearCompleted = createAsyncThunk(
+  "tasks/clearCompleted",
+  async () => {
+    return clearStoredCompletedTasks();
+  },
+);
+
+const writeTaskActions = [addTask, toggleTask, deleteTask, clearCompleted];
 
 const tasksSlice = createSlice({
   name: "tasks",
   initialState,
   reducers: {
-    addTask(state, action: PayloadAction<{ title: string }>) {
-      const trimmed = action.payload.title.trim();
-      if (!trimmed) return;
-
-      const newTask: Task = {
-        id: makeId(),
-        title: trimmed,
-        completed: false,
-        createdAt: Date.now(),
-      };
-
-      state.items.unshift(newTask);
-      saveTasks(state.items);
-    },
-
-    toggleTask(state, action: PayloadAction<{ id: string }>) {
-      const task = state.items.find((t) => t.id === action.payload.id);
-      if (!task) return;
-
-      task.completed = !task.completed;
-      saveTasks(state.items);
-    },
-
-    deleteTask(state, action: PayloadAction<{ id: string }>) {
-      state.items = state.items.filter((t) => t.id !== action.payload.id);
-      saveTasks(state.items);
-    },
-
-    clearCompleted(state) {
-      state.items = state.items.filter((t) => !t.completed);
-      saveTasks(state.items);
-    },
-
     setFilter(state, action: PayloadAction<{ filter: TaskFilter }>) {
       state.filter = action.payload.filter;
     },
   },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchTasks.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addCase(fetchTasks.fulfilled, (state, action) => {
+        state.items = action.payload;
+        state.status = "succeeded";
+        state.error = null;
+        state.hasLoaded = true;
+      })
+      .addCase(fetchTasks.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = getErrorMessage(action.error);
+        state.hasLoaded = true;
+      })
+      .addMatcher(isAnyOf(...writeTaskActions.map((action) => action.pending)), (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addMatcher(
+        isAnyOf(...writeTaskActions.map((action) => action.fulfilled)),
+        (state, action) => {
+          state.items = action.payload;
+          state.status = "succeeded";
+          state.error = null;
+          state.hasLoaded = true;
+        },
+      )
+      .addMatcher(
+        isAnyOf(...writeTaskActions.map((action) => action.rejected)),
+        (state, action) => {
+          state.status = "failed";
+          state.error = getErrorMessage(action.error);
+        },
+      );
+  },
 });
 
-export const { addTask, toggleTask, deleteTask, clearCompleted, setFilter } =
-  tasksSlice.actions;
+export const { setFilter } = tasksSlice.actions;
 
 const selectTasksState = (state: RootState): TasksState => state.tasks;
 
@@ -95,6 +127,20 @@ export const selectTasks = (state: RootState): Task[] =>
 
 export const selectTaskFilter = (state: RootState): TaskFilter =>
   selectTasksState(state).filter;
+
+export const selectTaskStatus = (state: RootState): TaskRequestStatus =>
+  selectTasksState(state).status;
+
+export const selectTaskError = (state: RootState): string | null =>
+  selectTasksState(state).error;
+
+export const selectHasLoadedTasks = (state: RootState): boolean =>
+  selectTasksState(state).hasLoaded;
+
+export const selectIsTasksBusy = createSelector(
+  [selectTaskStatus],
+  (status) => status === "loading",
+);
 
 export const selectVisibleTasks = createSelector(
   [selectTasks, selectTaskFilter],

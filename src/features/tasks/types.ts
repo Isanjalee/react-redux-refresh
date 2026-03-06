@@ -6,3 +6,5 @@ export type Task = {
 };
 
 export type TaskFilter = "all" | "active" | "completed";
+
+export type TaskRequestStatus = "idle" | "loading" | "succeeded" | "failed";

@@ -1,32 +1,92 @@
+import { makeId } from "./taskUtils";
 import type { Task } from "./types";
 
-const STORAGE_KEY = "rr_refresh_tasks_v1";
+const STORAGE_KEY = "rr_refresh_tasks_v4";
+const STORAGE_DELAY_MS = 250;
 
-export function loadTasks(): Task[] {
+function delay(ms: number) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
+function isTask(value: unknown): value is Task {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    typeof (value as Task).id === "string" &&
+    typeof (value as Task).title === "string" &&
+    typeof (value as Task).completed === "boolean" &&
+    typeof (value as Task).createdAt === "number"
+  );
+}
+
+function readTasks(): Task[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
-    const parsed = JSON.parse(raw) as unknown;
 
-    // Basic safety check (avoid crashing on corrupted storage)
+    const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
+
     return parsed.filter(isTask);
   } catch {
     return [];
   }
 }
 
-export function saveTasks(tasks: Task[]): void {
+function writeTasks(tasks: Task[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
 }
 
-function isTask(x: any): x is Task {
-  return (
-    x &&
-    typeof x === "object" &&
-    typeof x.id === "string" &&
-    typeof x.title === "string" &&
-    typeof x.completed === "boolean" &&
-    typeof x.createdAt === "number"
+export async function fetchStoredTasks(): Promise<Task[]> {
+  await delay(STORAGE_DELAY_MS);
+  return readTasks();
+}
+
+export async function createStoredTask(title: string): Promise<Task[]> {
+  await delay(STORAGE_DELAY_MS);
+
+  const trimmed = title.trim();
+  if (!trimmed) return readTasks();
+
+  const nextTasks = [
+    {
+      id: makeId(),
+      title: trimmed,
+      completed: false,
+      createdAt: Date.now(),
+    },
+    ...readTasks(),
+  ];
+
+  writeTasks(nextTasks);
+  return nextTasks;
+}
+
+export async function toggleStoredTask(id: string): Promise<Task[]> {
+  await delay(STORAGE_DELAY_MS);
+
+  const nextTasks = readTasks().map((task) =>
+    task.id === id ? { ...task, completed: !task.completed } : task,
   );
+
+  writeTasks(nextTasks);
+  return nextTasks;
+}
+
+export async function deleteStoredTask(id: string): Promise<Task[]> {
+  await delay(STORAGE_DELAY_MS);
+
+  const nextTasks = readTasks().filter((task) => task.id !== id);
+  writeTasks(nextTasks);
+  return nextTasks;
+}
+
+export async function clearStoredCompletedTasks(): Promise<Task[]> {
+  await delay(STORAGE_DELAY_MS);
+
+  const nextTasks = readTasks().filter((task) => !task.completed);
+  writeTasks(nextTasks);
+  return nextTasks;
 }
