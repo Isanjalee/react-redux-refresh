@@ -1,7 +1,8 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSelector, createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
+import type { RootState } from "../../app/store";
 import type { Task, TaskFilter } from "./types";
-import { makeId } from "./taskUtils";
+import { filterTasks, makeId } from "./taskUtils";
 
 /** LocalStorage key for Redux-persisted tasks */
 const STORAGE_KEY = "rr_refresh_tasks_v3";
@@ -86,5 +87,32 @@ const tasksSlice = createSlice({
 
 export const { addTask, toggleTask, deleteTask, clearCompleted, setFilter } =
   tasksSlice.actions;
+
+const selectTasksState = (state: RootState): TasksState => state.tasks;
+
+export const selectTasks = (state: RootState): Task[] =>
+  selectTasksState(state).items;
+
+export const selectTaskFilter = (state: RootState): TaskFilter =>
+  selectTasksState(state).filter;
+
+export const selectVisibleTasks = createSelector(
+  [selectTasks, selectTaskFilter],
+  filterTasks,
+);
+
+export const selectTaskStats = createSelector([selectTasks], (tasks) => {
+  let completed = 0;
+
+  for (const task of tasks) {
+    if (task.completed) completed++;
+  }
+
+  return {
+    total: tasks.length,
+    completed,
+    active: tasks.length - completed,
+  };
+});
 
 export default tasksSlice.reducer;

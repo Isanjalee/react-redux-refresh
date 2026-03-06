@@ -20,6 +20,7 @@ export default function TaskFilters({ value, onChange }: Props) {
         return (
           <button
             key={f.key}
+            type="button"
             onClick={() => onChange(f.key)}
             className={`rounded-full px-4 py-2 text-sm font-medium transition ${
               active

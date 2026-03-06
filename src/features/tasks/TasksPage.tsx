@@ -1,40 +1,25 @@
-import { useMemo, useCallback } from "react";
+import { useCallback } from "react";
 import TaskForm from "./components/TaskForm";
 import TaskFilters from "./components/TaskFilters";
 import TaskList from "./components/TaskList";
 import Button from "../../shared/components/Button";
-
-import { filterTasks } from "./taskUtils";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import {
   addTask,
-  toggleTask,
-  deleteTask,
   clearCompleted,
+  deleteTask,
+  selectTaskFilter,
+  selectTaskStats,
+  selectVisibleTasks,
   setFilter,
+  toggleTask,
 } from "./tasksSlice";
 
 export default function TasksPage() {
   const dispatch = useAppDispatch();
-
-  const tasks = useAppSelector((s: any) => s.tasks.items);
-  const filter = useAppSelector((s: any) => s.tasks.filter);
-
-  const visibleTasks = useMemo(
-    () => filterTasks(tasks, filter),
-    [tasks, filter],
-  );
-
-  const stats = useMemo(() => {
-    let completed = 0;
-    for (const t of tasks) if (t.completed) completed++;
-
-    return {
-      total: tasks.length,
-      completed,
-      active: tasks.length - completed,
-    };
-  }, [tasks]);
+  const filter = useAppSelector(selectTaskFilter);
+  const visibleTasks = useAppSelector(selectVisibleTasks);
+  const stats = useAppSelector(selectTaskStats);
 
   const onAdd = useCallback(
     (title: string) => {
@@ -61,17 +46,24 @@ export default function TasksPage() {
     dispatch(clearCompleted());
   }, [dispatch]);
 
+  const onFilterChange = useCallback(
+    (nextFilter: typeof filter) => {
+      dispatch(setFilter({ filter: nextFilter }));
+    },
+    [dispatch],
+  );
+
   return (
     <div className="min-h-screen bg-gray-100">
       <div className="mx-auto max-w-3xl px-4 py-12">
         <header className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              React Refresh — Tasks MVP
+              React Refresh - Tasks MVP
             </h1>
 
             <p className="mt-2 text-sm text-gray-600">
-              Total: <b>{stats.total}</b> · Active: <b>{stats.active}</b> ·
+              Total: <b>{stats.total}</b> | Active: <b>{stats.active}</b> |
               Completed: <b>{stats.completed}</b>
             </p>
           </div>
@@ -89,10 +81,7 @@ export default function TasksPage() {
           <TaskForm onAdd={onAdd} />
 
           <div className="mt-6">
-            <TaskFilters
-              value={filter}
-              onChange={(f) => dispatch(setFilter({ filter: f }))}
-            />
+            <TaskFilters value={filter} onChange={onFilterChange} />
           </div>
 
           <div className="mt-6">
