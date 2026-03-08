@@ -5,6 +5,13 @@ export const store = configureStore({
   reducer: {
     tasks: tasksReducer,
   },
+  devTools: import.meta.env.DEV
+    ? {
+        name: "React Redux Refresh - Day 5",
+        trace: true,
+        traceLimit: 25,
+      }
+    : false,
 });
 
 // Types for TS

@@ -44,49 +44,70 @@ export async function fetchStoredTasks(): Promise<Task[]> {
   return readTasks();
 }
 
-export async function createStoredTask(title: string): Promise<Task[]> {
+export async function createStoredTask(title: string): Promise<Task> {
   await delay(STORAGE_DELAY_MS);
 
   const trimmed = title.trim();
-  if (!trimmed) return readTasks();
+  if (!trimmed) {
+    throw new Error("Task title cannot be empty");
+  }
 
-  const nextTasks = [
-    {
-      id: makeId(),
-      title: trimmed,
-      completed: false,
-      createdAt: Date.now(),
-    },
-    ...readTasks(),
-  ];
+  const nextTask = {
+    id: makeId(),
+    title: trimmed,
+    completed: false,
+    createdAt: Date.now(),
+  };
+
+  const nextTasks = [nextTask, ...readTasks()];
 
   writeTasks(nextTasks);
-  return nextTasks;
+  return nextTask;
 }
 
-export async function toggleStoredTask(id: string): Promise<Task[]> {
+export async function toggleStoredTask(id: string): Promise<Task> {
   await delay(STORAGE_DELAY_MS);
 
-  const nextTasks = readTasks().map((task) =>
-    task.id === id ? { ...task, completed: !task.completed } : task,
-  );
+  let updatedTask: Task | null = null;
+  const nextTasks = readTasks().map((task) => {
+    if (task.id !== id) return task;
+
+    updatedTask = { ...task, completed: !task.completed };
+    return updatedTask;
+  });
+
+  if (!updatedTask) {
+    throw new Error("Task not found");
+  }
 
   writeTasks(nextTasks);
-  return nextTasks;
+  return updatedTask;
 }
 
-export async function deleteStoredTask(id: string): Promise<Task[]> {
+export async function deleteStoredTask(id: string): Promise<string> {
   await delay(STORAGE_DELAY_MS);
 
-  const nextTasks = readTasks().filter((task) => task.id !== id);
+  const currentTasks = readTasks();
+  const taskExists = currentTasks.some((task) => task.id === id);
+
+  if (!taskExists) {
+    throw new Error("Task not found");
+  }
+
+  const nextTasks = currentTasks.filter((task) => task.id !== id);
   writeTasks(nextTasks);
-  return nextTasks;
+  return id;
 }
 
-export async function clearStoredCompletedTasks(): Promise<Task[]> {
+export async function clearStoredCompletedTasks(): Promise<string[]> {
   await delay(STORAGE_DELAY_MS);
 
-  const nextTasks = readTasks().filter((task) => !task.completed);
+  const tasks = readTasks();
+  const removedIds = tasks
+    .filter((task) => task.completed)
+    .map((task) => task.id);
+  const nextTasks = tasks.filter((task) => !task.completed);
+
   writeTasks(nextTasks);
-  return nextTasks;
+  return removedIds;
 }

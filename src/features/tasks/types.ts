@@ -8,3 +8,20 @@ export type Task = {
 export type TaskFilter = "all" | "active" | "completed";
 
 export type TaskRequestStatus = "idle" | "loading" | "succeeded" | "failed";
+
+export type TaskMutationType =
+  | "addTask"
+  | "toggleTask"
+  | "deleteTask"
+  | "clearCompleted"
+  | null;
+
+export type TasksRequestMap = {
+  fetch: TaskRequestStatus;
+  mutate: TaskRequestStatus;
+};
+
+export type TasksErrorMap = {
+  fetch: string | null;
+  mutate: string | null;
+};

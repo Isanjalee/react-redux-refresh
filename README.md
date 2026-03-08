@@ -22,6 +22,9 @@ This repository is used to practice:
 - Performance optimization
 - Redux Toolkit patterns
 - Async state management
+- Normalized Redux architecture
+- Memoized selector design
+- Redux DevTools debugging
 
 ## Project Structure
 
@@ -40,8 +43,11 @@ src/
 |       |   |-- TaskItem.tsx
 |       |   `-- TaskList.tsx
 |       |-- storage.ts
+|       |-- tasksAdapter.ts
+|       |-- tasksSelectors.ts
 |       |-- TasksPage.tsx
 |       |-- tasksSlice.ts
+|       |-- tasksThunks.ts
 |       |-- taskUtils.ts
 |       `-- types.ts
 |-- shared/
@@ -91,20 +97,30 @@ src/
 - Loading and error UI states
 - Thunk-driven task mutations
 
+### Day 5
+
+- `createEntityAdapter`
+- Normalized entity state
+- Memoized selector modules
+- Separated thunks, selectors, and reducers
+- Redux DevTools trace-friendly store setup
+- Per-operation async request metadata
+
 ## Current Status
 
 - Day 1 complete
 - Day 2 complete
 - Day 3 complete
 - Day 4 complete
+- Day 5 complete
 
 ## Next Improvements
 
-- Retry controls for failed async flows
 - Async thunks with real API integration
+- RTK Query comparison
 - Middleware exploration
 - Testing with React Testing Library
-- Production-focused refinements
+- Selector and thunk unit tests
 
 ## Installation
 
