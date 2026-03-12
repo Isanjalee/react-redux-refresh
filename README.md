@@ -25,6 +25,9 @@ This repository is used to practice:
 - Normalized Redux architecture
 - Memoized selector design
 - Redux DevTools debugging
+- Reducer and thunk testing
+- React Testing Library workflows
+- Redux + UI integration testing
 
 ## Project Structure
 
@@ -39,17 +42,24 @@ src/
 |   `-- tasks/
 |       |-- components/
 |       |   |-- TaskFilters.tsx
+|       |   |-- TaskForm.test.tsx
 |       |   |-- TaskForm.tsx
 |       |   |-- TaskItem.tsx
 |       |   `-- TaskList.tsx
 |       |-- storage.ts
 |       |-- tasksAdapter.ts
+|       |-- TasksPage.integration.test.tsx
 |       |-- tasksSelectors.ts
 |       |-- TasksPage.tsx
+|       |-- tasksSlice.test.ts
 |       |-- tasksSlice.ts
+|       |-- tasksThunks.test.ts
 |       |-- tasksThunks.ts
 |       |-- taskUtils.ts
 |       `-- types.ts
+|-- test/
+|   |-- setup.ts
+|   `-- test-utils.tsx
 |-- shared/
 |   |-- components/
 |   |   `-- Button.tsx
@@ -106,6 +116,15 @@ src/
 - Redux DevTools trace-friendly store setup
 - Per-operation async request metadata
 
+### Day 6
+
+- Unit testing reducers
+- Testing async thunks
+- Testing React components
+- Mocking APIs with `vi.mock`
+- Integration testing Redux + UI together
+- Vitest + React Testing Library setup
+
 ## Current Status
 
 - Day 1 complete
@@ -113,20 +132,21 @@ src/
 - Day 3 complete
 - Day 4 complete
 - Day 5 complete
+- Day 6 complete
 
 ## Next Improvements
 
-- Async thunks with real API integration
 - RTK Query comparison
 - Middleware exploration
-- Testing with React Testing Library
-- Selector and thunk unit tests
+- E2E coverage for full browser flows
+- Real HTTP API integration instead of localStorage service mocks
 
 ## Installation
 
 ```bash
 npm install
 npm run dev
+npm test
 ```
 
 ## Purpose

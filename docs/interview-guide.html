@@ -1,0 +1,849 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>React Redux Refresh - Day 1 to Day 6 Interview Guide</title>
+    <style>
+      :root {
+        --bg: #f5f1e8;
+        --paper: #fffdf8;
+        --ink: #1f2937;
+        --muted: #6b7280;
+        --line: #d6d3d1;
+        --accent: #0f766e;
+        --accent-soft: #ccfbf1;
+        --code: #f3f4f6;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, #e7e5e4 0%, transparent 30%),
+          linear-gradient(180deg, #ede9df 0%, var(--bg) 100%);
+      }
+
+      .page {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0 auto;
+        padding: 18mm 16mm 20mm;
+        background: var(--paper);
+      }
+
+      h1,
+      h2,
+      h3 {
+        margin: 0 0 10px;
+        line-height: 1.2;
+      }
+
+      h1 {
+        font-size: 30px;
+      }
+
+      h2 {
+        margin-top: 28px;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--line);
+        font-size: 22px;
+      }
+
+      h3 {
+        margin-top: 22px;
+        font-size: 16px;
+      }
+
+      p,
+      li {
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      ul {
+        margin: 8px 0 0;
+        padding-left: 18px;
+      }
+
+      .hero {
+        padding: 18px 20px;
+        border: 1px solid var(--line);
+        background: linear-gradient(135deg, #fafaf9 0%, #ecfeff 100%);
+      }
+
+      .eyebrow {
+        margin: 0 0 8px;
+        font-size: 11px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+
+      .summary {
+        color: var(--muted);
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .card {
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        background: #fff;
+        break-inside: avoid;
+      }
+
+      .accent {
+        background: var(--accent-soft);
+        border-color: #99f6e4;
+      }
+
+      .qa {
+        margin-top: 14px;
+        padding: 12px 14px;
+        border-left: 4px solid var(--accent);
+        background: #fafaf9;
+        break-inside: avoid;
+      }
+
+      .qa p {
+        margin: 6px 0;
+      }
+
+      .label {
+        font-weight: 700;
+      }
+
+      code,
+      pre {
+        font-family: Consolas, "Courier New", monospace;
+      }
+
+      code {
+        padding: 1px 4px;
+        background: var(--code);
+      }
+
+      pre {
+        margin: 10px 0 0;
+        padding: 12px;
+        overflow: hidden;
+        white-space: pre-wrap;
+        border: 1px solid var(--line);
+        background: var(--code);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 12px;
+      }
+
+      th,
+      td {
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        vertical-align: top;
+        text-align: left;
+      }
+
+      th {
+        background: #f8fafc;
+      }
+
+      .small {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .two-col {
+        columns: 2;
+        column-gap: 24px;
+      }
+
+      @page {
+        size: A4;
+        margin: 12mm;
+      }
+
+      @media print {
+        body {
+          background: #fff;
+        }
+
+        .page {
+          width: auto;
+          min-height: auto;
+          margin: 0;
+          padding: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <p class="eyebrow">React Redux Refresh</p>
+        <h1>Day 1 to Day 6 Interview Guide</h1>
+        <p class="summary">
+          A printable study guide built from your full progress so far, from
+          Day 1 through Day 6, March 12, 2026. It covers React fundamentals,
+          TypeScript, routing, local state, performance, Tailwind, feature
+          architecture, Redux Toolkit, async thunks, normalized state,
+          selectors, Redux DevTools, and testing strategy.
+        </p>
+        <p class="small">
+          Coverage: Day 1, Day 2, Day 3, Day 4, Day 5, and Day 6 work on
+          Redux testing, mocked API boundaries, and UI integration confidence.
+          Update this file after each new learning day and regenerate the PDF.
+        </p>
+      </section>
+
+      <h2>1. What You Should Be Able To Explain</h2>
+      <div class="grid">
+        <div class="card accent">
+          <h3>Core React</h3>
+          <ul>
+            <li>How props flow down and events flow up.</li>
+            <li>How state updates trigger re-renders.</li>
+            <li>Why controlled inputs are predictable.</li>
+            <li>How reconciliation uses element type and keys.</li>
+            <li>When memoization helps and when it is noise.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>State Architecture</h3>
+          <ul>
+            <li>What belongs in local component state.</li>
+            <li>What belongs in shared global state.</li>
+            <li>Why selectors are preferable to ad hoc derivation everywhere.</li>
+            <li>Why normalized state scales better than large nested arrays.</li>
+            <li>Why async state needs loading and error modeling.</li>
+            <li>How Redux Toolkit reduces accidental complexity.</li>
+            <li>How to test reducers, thunks, and Redux-connected UI separately.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>2. Roadmap Through Today</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Day</th>
+            <th>Main focus</th>
+            <th>What changed in the project</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Day 1</td>
+            <td>React foundations</td>
+            <td>Built the task app with routing, local state, controlled forms, and basic localStorage persistence.</td>
+          </tr>
+          <tr>
+            <td>Day 2</td>
+            <td>Performance and reuse</td>
+            <td>Added reusable components, Tailwind styling, and practical memoization with <code>React.memo</code>, <code>useMemo</code>, and <code>useCallback</code>.</td>
+          </tr>
+          <tr>
+            <td>Day 3</td>
+            <td>Redux Toolkit basics</td>
+            <td>Moved shared task state into Redux Toolkit with slices, typed hooks, and selector-driven reads.</td>
+          </tr>
+          <tr>
+            <td>Day 4</td>
+            <td>Async state</td>
+            <td>Introduced <code>createAsyncThunk</code>, loading and error modeling, and a storage service boundary for async flows.</td>
+          </tr>
+          <tr>
+            <td>Day 5</td>
+            <td>Advanced Redux patterns</td>
+            <td>Normalized task state with entity adapter, split selectors and thunks into dedicated modules, improved async boundaries, and configured Redux DevTools tracing.</td>
+          </tr>
+          <tr>
+            <td>Day 6</td>
+            <td>Testing Redux and UI</td>
+            <td>Added Vitest and React Testing Library, wrote reducer and thunk tests, mocked the storage API boundary, tested form behavior, and verified Redux + UI flows together.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>3. Day 1 Foundations</h2>
+      <h3>Component Model</h3>
+      <p>
+        A React component is a function that maps state and props to UI. It is
+        not a template file plus code-behind. Every render is a fresh execution
+        of the component function. Variables declared inside the component are
+        recalculated on each render unless persisted through hooks or lifted out
+        of the render path.
+      </p>
+
+      <h3>Props, Events, and Data Flow</h3>
+      <pre>Parent state
+  -> passes props to child
+Child reads props
+  -> user interacts
+Child calls callback prop
+  -> parent updates state
+Parent re-renders
+  -> updated props flow down again</pre>
+      <p>
+        This is the default React model: unidirectional data flow. The parent
+        owns the state, children receive values and functions. Senior-level
+        reasoning here is about keeping ownership explicit and not scattering
+        mutable state across unrelated components.
+      </p>
+
+      <h3>Controlled Inputs</h3>
+      <p>
+        A controlled input binds <code>value</code> to React state and updates
+        that state in <code>onChange</code>. The source of truth becomes the
+        component state instead of the DOM node. This makes validation,
+        formatting, submit handling, and reset logic deterministic.
+      </p>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> Why use controlled inputs instead of uncontrolled inputs?</p>
+        <p><span class="label">Answer:</span> Controlled inputs make state transitions explicit, which improves validation, serialization, reset behavior, and coordination with other UI state. Uncontrolled inputs can be simpler for basic forms, but controlled inputs are the standard choice when the form behavior matters.</p>
+      </div>
+
+      <h3>Local Storage Persistence</h3>
+      <p>
+        Local storage is synchronous and browser-local. It works for demos,
+        simple offline persistence, and learning projects, but it is not a
+        substitute for a real server. It has no conflict resolution, auth,
+        schema evolution, or concurrent-user guarantees.
+      </p>
+
+      <h3>React Router Basics</h3>
+      <p>
+        Router configuration maps URLs to UI. At interview level, explain that
+        route state should be used for navigation concerns, not as a generic
+        replacement for application state. Route params identify resources; app
+        state represents current client data.
+      </p>
+
+      <h2>4. React Internals You Should Know</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Concept</th>
+            <th>What it means</th>
+            <th>Why interviewers care</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Render phase</td>
+            <td>React computes the next UI tree by calling components.</td>
+            <td>Shows you understand render is calculation, not DOM mutation.</td>
+          </tr>
+          <tr>
+            <td>Commit phase</td>
+            <td>React applies the minimal DOM updates after diffing.</td>
+            <td>Helps explain why pure rendering matters.</td>
+          </tr>
+          <tr>
+            <td>Reconciliation</td>
+            <td>React compares previous and next trees.</td>
+            <td>Explains keys, preservation of state, and remount behavior.</td>
+          </tr>
+          <tr>
+            <td>Batching</td>
+            <td>Multiple state updates can be grouped into one render.</td>
+            <td>Shows you know React is scheduling work, not immediately mutating UI.</td>
+          </tr>
+          <tr>
+            <td>Closures</td>
+            <td>Handlers capture values from the render they were created in.</td>
+            <td>Important for stale state bugs and hook dependencies.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> Why does React need keys in lists?</p>
+        <p><span class="label">Answer:</span> Keys let React track identity across renders. Without stable keys, React may reuse the wrong DOM nodes or component instances, causing incorrect state preservation and unnecessary remounting.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> What causes a React component to re-render?</p>
+        <p><span class="label">Answer:</span> A re-render happens when its local state changes, its parent re-renders and passes new props, the component consumes changed context, or a subscribed store selector returns a changed value.</p>
+      </div>
+
+      <h2>5. How Params and State Move Through a React App</h2>
+      <h3>Props</h3>
+      <p>
+        Use props when state ownership is local to a parent and children only
+        need values or callbacks. This is the cleanest path because the
+        dependency graph stays obvious.
+      </p>
+      <pre>type TaskFormProps = {
+  onAdd: (title: string) => void;
+  disabled?: boolean;
+};</pre>
+
+      <h3>Local State</h3>
+      <p>
+        Use <code>useState</code> for UI concerns that are local and temporary:
+        input text, modal open/closed state, touched flags, active tab, or
+        draft values that do not need broad sharing.
+      </p>
+
+      <h3>Route Params</h3>
+      <p>
+        Use route params to identify the resource the screen should display:
+        <code>/tasks/:taskId</code>. Do not put large mutable UI state in the
+        URL unless shareability and navigation semantics justify it.
+      </p>
+
+      <h3>Redux Store</h3>
+      <p>
+        Use Redux when multiple parts of the app depend on the same state, when
+        update logic should be centralized, or when async request status needs a
+        consistent model. Components should read store state through selectors,
+        not by repeatedly digging through the store shape inline.
+      </p>
+
+      <pre>UI event
+  -> dispatch(thunk or action)
+Store processes reducer / extraReducer
+  -> new state produced
+Selector reads derived result
+  -> subscribed component re-renders</pre>
+
+      <h3>How To Choose</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Mechanism</th>
+            <th>Use when</th>
+            <th>Avoid when</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Props</td>
+            <td>State has a clear nearby owner.</td>
+            <td>Too many intermediate components are forwarding data.</td>
+          </tr>
+          <tr>
+            <td>Local state</td>
+            <td>The data is view-local and short-lived.</td>
+            <td>Other screens or features need it.</td>
+          </tr>
+          <tr>
+            <td>Route params</td>
+            <td>The URL should identify current resource or filter.</td>
+            <td>The data is ephemeral UI detail.</td>
+          </tr>
+          <tr>
+            <td>Redux</td>
+            <td>Multiple consumers, shared async status, centralized rules.</td>
+            <td>The state is purely local and simple.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>6. Day 2 Performance and Reuse</h2>
+      <h3><code>React.memo</code></h3>
+      <p>
+        <code>React.memo</code> skips re-rendering a child when its props are
+        shallowly equal. It is useful when the child is expensive or receives
+        stable props. It is not a default wrapper for every component.
+      </p>
+
+      <h3><code>useMemo</code></h3>
+      <p>
+        Use <code>useMemo</code> for expensive derived values or to maintain
+        stable references when reference identity matters. Do not use it to hide
+        cheap calculations or as cargo-cult optimization.
+      </p>
+
+      <h3><code>useCallback</code></h3>
+      <p>
+        <code>useCallback</code> memoizes function identity. It matters when a
+        child is memoized or when a dependency array would otherwise change on
+        every render. It does not make the function faster to execute.
+      </p>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> When is <code>useCallback</code> useless?</p>
+        <p><span class="label">Answer:</span> It is usually useless when the callback is cheap, the child is not memoized, and function identity is not part of any dependency-sensitive path. In those cases, it adds code without reducing work.</p>
+      </div>
+
+      <h3>Feature-Based Architecture</h3>
+      <p>
+        A feature folder groups components, state, utilities, and types by
+        business domain rather than by technical layer. This improves local
+        reasoning, reduces cross-folder hunting, and makes ownership clearer.
+      </p>
+
+      <h3>Tailwind CSS</h3>
+      <p>
+        Tailwind is utility-first styling. Senior-level usage means being able
+        to discuss tradeoffs: fast iteration and predictable colocation versus
+        large class strings and the need for disciplined abstractions when
+        repeated patterns emerge.
+      </p>
+
+      <h2>7. TypeScript in a React Codebase</h2>
+      <ul>
+        <li>Type props at the component boundary.</li>
+        <li>Type event handlers where DOM event detail matters.</li>
+        <li>Type Redux hooks so selectors and dispatch stay safe.</li>
+        <li>Use unions for finite UI states such as filters and request status.</li>
+        <li>Prefer explicit domain types over <code>any</code>.</li>
+      </ul>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> Why is <code>any</code> dangerous in frontend code?</p>
+        <p><span class="label">Answer:</span> It disables the compiler exactly at the boundary where bugs are likely: props, API data, reducer payloads, and event handling. It lowers trust in refactors and makes runtime issues easier to ship.</p>
+      </div>
+
+      <h2>8. Day 3 Redux Toolkit</h2>
+      <h3>Store, Slice, Reducer, Selector</h3>
+      <p>
+        Redux Toolkit provides structured primitives for predictable state
+        management. A store holds application state. A slice defines a domain of
+        state plus reducers. Selectors are read APIs over store state. This
+        separation matters because it prevents UI components from becoming the
+        place where every rule lives.
+      </p>
+
+      <h3>Immer and Immutable Updates</h3>
+      <p>
+        Redux Toolkit uses Immer under the hood, allowing reducer code that
+        looks mutative while producing immutable results. The practical benefit
+        is less boilerplate and lower risk of accidental mutation bugs.
+      </p>
+
+      <pre>state.items.unshift(newTask)
+
+// looks mutable, but Immer tracks the draft and
+// returns a safe immutable next state</pre>
+
+      <h3>Why Selectors Matter</h3>
+      <p>
+        Selectors centralize read logic. If every component calculates visible
+        tasks, stats, or derived flags separately, business logic becomes
+        duplicated and inconsistent. Selectors also support memoization.
+      </p>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> What problem does Redux Toolkit solve over plain Redux?</p>
+        <p><span class="label">Answer:</span> It removes repetitive setup, encourages sane defaults, bakes in Immer, simplifies async with thunks, and improves maintainability. It solves accidental ceremony more than conceptual complexity.</p>
+      </div>
+
+      <h2>9. Day 4 Async Thunks and Request State</h2>
+      <h3>Why Async Changes the Design</h3>
+      <p>
+        Once data is asynchronous, the UI can no longer assume a value is
+        simply present. You must model at least four states: idle, loading,
+        succeeded, and failed. Without this, your app will show stale screens,
+        broken controls, or silent failures.
+      </p>
+
+      <h3><code>createAsyncThunk</code> Lifecycle</h3>
+      <pre>dispatch(fetchTasks())
+  -> pending
+  -> async work runs
+  -> fulfilled with payload
+     or rejected with error</pre>
+
+      <p>
+        A thunk is not just "an async function in Redux." It is a structured
+        flow that gives reducers lifecycle events, lets UI track request state,
+        and keeps side effects outside presentational components.
+      </p>
+
+      <h3>Senior-Level Concerns in Async UI</h3>
+      <ul>
+        <li>Prevent overlapping writes when the UI cannot safely merge them.</li>
+        <li>Show clear loading and error states.</li>
+        <li>Keep reducer logic deterministic.</li>
+        <li>Model retries intentionally, not accidentally.</li>
+        <li>Know when local optimistic updates are safe and when they are not.</li>
+      </ul>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> Why store request status in Redux state?</p>
+        <p><span class="label">Answer:</span> Because loading, success, and failure are part of the user-visible state of the feature. Multiple components may need to react consistently to those states, so centralizing them avoids fragmented UI behavior.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> What is the difference between a reducer and a thunk?</p>
+        <p><span class="label">Answer:</span> A reducer is a pure state transition function. A thunk orchestrates side effects and dispatches actions before and after async work. Reducers must stay deterministic; thunks are where I/O belongs.</p>
+      </div>
+
+      <h2>10. Day 5 Advanced Redux Patterns</h2>
+      <h3>Normalized State with Entity Adapter</h3>
+      <p>
+        Storing entities as an ID map plus ordered IDs is a production pattern
+        because reads and writes stay predictable as the collection grows.
+        Instead of replacing an entire array after each mutation, reducers can
+        add, update, or remove a single entity with focused operations.
+      </p>
+
+      <pre>tasks: {
+  ids: ["t3", "t2", "t1"],
+  entities: {
+    t1: { id: "t1", title: "Ship Redux refactor", completed: false },
+    t2: { id: "t2", title: "Write selectors", completed: true },
+    t3: { id: "t3", title: "Inspect DevTools", completed: false }
+  }
+}</pre>
+
+      <h3>Selectors as the Read API</h3>
+      <p>
+        Components should not know storage shape details. A selector layer
+        becomes the read API for the feature: visible task IDs, counts, loading
+        flags, and derived error state. Memoization matters when selectors are
+        reused and when their outputs would otherwise allocate new arrays or
+        objects every render.
+      </p>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> Why memoize selectors instead of computing filtered lists inside components?</p>
+        <p><span class="label">Answer:</span> Because selector memoization centralizes derivation, avoids repeated allocation work for identical inputs, and keeps components focused on rendering instead of reimplementing domain rules.</p>
+      </div>
+
+      <h3>Cleaner Separation of Concerns</h3>
+      <p>
+        A maintainable Redux feature usually separates write orchestration,
+        state transitions, and read logic:
+      </p>
+      <ul>
+        <li><code>tasksThunks.ts</code> handles async orchestration and error translation.</li>
+        <li><code>tasksSlice.ts</code> handles state transitions.</li>
+        <li><code>tasksSelectors.ts</code> handles derived read logic.</li>
+        <li><code>storage.ts</code> acts as the persistence boundary.</li>
+      </ul>
+
+      <h3>Better Async Patterns</h3>
+      <p>
+        Production thinking means modeling fetch and mutation status
+        separately, preventing overlapping writes when the UI cannot safely
+        merge them, and preserving useful failure messages with
+        <code>rejectWithValue</code>. This makes the UI and DevTools timeline
+        easier to reason about.
+      </p>
+
+      <h3>Redux DevTools as an Architecture Tool</h3>
+      <p>
+        DevTools is not just for debugging bugs after the fact. It helps verify
+        that actions are small, reducers are deterministic, thunk lifecycles are
+        visible, and state shape stays understandable. If your DevTools history
+        looks noisy or confusing, the architecture often needs work.
+      </p>
+
+      <h3>What Today's Refactor Proves</h3>
+      <ul>
+        <li>You can treat selectors as the stable read API for a feature.</li>
+        <li>You can update one entity without replacing the entire collection.</li>
+        <li>You can separate fetch status from mutation status instead of collapsing everything into one loading flag.</li>
+        <li>You can keep side effects in thunks and state transitions in reducers.</li>
+        <li>You can use DevTools to inspect architecture quality, not just bugs.</li>
+      </ul>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> What is the benefit of entity adapter if the UI still shows a simple list?</p>
+        <p><span class="label">Answer:</span> The UI may be simple today, but normalized state reduces update cost, improves selector composition, and avoids rewriting reducers later when detail views, lookups, or cross-feature references appear.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> Why separate thunk files from slice files?</p>
+        <p><span class="label">Answer:</span> Because async orchestration and pure state transitions are different responsibilities. Separating them reduces file sprawl, makes testing easier, and keeps reducers focused on deterministic updates.</p>
+      </div>
+
+      <h2>11. Day 6 Testing Redux and UI</h2>
+      <h3>What Was Added in the Task App</h3>
+      <p>
+        Day 6 turned the architecture work into a testing surface. The project
+        now has four complementary test layers:
+      </p>
+      <ul>
+        <li><code>tasksSlice.test.ts</code> verifies pure reducer transitions such as filter changes, fulfilled fetches, and rejected mutations.</li>
+        <li><code>tasksThunks.test.ts</code> verifies async thunk orchestration, including success paths, condition guards, and rejected payload handling.</li>
+        <li><code>TaskForm.test.tsx</code> verifies component behavior such as validation, trimmed input submission, and field reset behavior.</li>
+        <li><code>TasksPage.integration.test.tsx</code> verifies the full Redux-connected screen: initial loading, fetched tasks, adding a task, toggling a task, and last-mutation UI updates.</li>
+      </ul>
+
+      <h3>Why the Storage Layer Is Mocked</h3>
+      <p>
+        The task feature uses <code>storage.ts</code> as a persistence boundary.
+        In tests, that boundary is mocked with <code>vi.mock</code> so the test
+        can control responses without depending on real browser persistence or
+        timer delays. That keeps tests focused on Redux and UI behavior rather
+        than localStorage mechanics.
+      </p>
+
+      <pre>UI event
+  -> dispatch(addTask or toggleTask thunk)
+Thunk calls mocked storage boundary
+  -> mocked success or failure response
+Reducer handles pending / fulfilled / rejected
+Selector output changes
+  -> component re-renders with updated UI</pre>
+
+      <h3>How To Explain the Testing Strategy</h3>
+      <p>
+        The testing strategy is layered. Pure reducer tests prove deterministic
+        state transitions. Thunk tests prove async orchestration and error
+        translation. Component tests prove isolated UI behavior. Integration
+        tests prove that Redux state, selectors, thunks, and rendering work
+        together under user interaction.
+      </p>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> Why unit test reducers separately if integration tests already exist?</p>
+        <p><span class="label">Answer:</span> Reducers are pure and cheap to test, so they give fast feedback on state transition rules. Integration tests are broader and valuable, but reducer tests make it easier to pinpoint whether a failure is in state logic or in the UI wiring.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> What should an async thunk test prove?</p>
+        <p><span class="label">Answer:</span> It should prove the orchestration contract: whether the thunk calls the dependency with the right inputs, whether condition guards block invalid work, and whether fulfilled or rejected results produce the expected Redux state and payloads.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> Why mock the API or storage boundary instead of using the real implementation in every test?</p>
+        <p><span class="label">Answer:</span> Because most tests should validate application behavior, not re-test browser storage mechanics or network timing. Mocking the boundary makes tests deterministic, faster, and more focused on the code under review.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> What is the difference between a component test and a Redux + UI integration test?</p>
+        <p><span class="label">Answer:</span> A component test isolates a small UI unit and usually passes props directly. A Redux + UI integration test renders the connected screen with a real store, dispatch flow, selectors, and user events so it can validate that the feature works as a system.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> In this task app, what does the Day 6 integration test actually prove?</p>
+        <p><span class="label">Answer:</span> It proves that the page dispatches the initial fetch, renders loading and fetched task data, submits a new task through the thunk path, toggles an existing task, and reflects the last mutation in the UI. That is stronger evidence than checking one reducer or one component in isolation.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> How do you keep frontend tests from becoming brittle?</p>
+        <p><span class="label">Answer:</span> Test behavior instead of implementation details. Prefer user-visible queries, keep mocks at clear boundaries, avoid asserting incidental markup, and reserve deep internal assertions for pure units like reducers or selector logic.</p>
+      </div>
+
+      <h2>12. Senior Frontend Interview Questions and Answers</h2>
+
+      <div class="qa">
+        <p><span class="label">Q:</span> How do you decide whether state should live in a component, context, or Redux?</p>
+        <p><span class="label">A:</span> Start with ownership and scope. If one component owns it, keep it local. If a tree branch needs it and prop drilling becomes structural noise, context may fit. If multiple parts of the app need the data plus coordinated updates, async lifecycle, selectors, or debugging support, Redux is justified.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Q:</span> What would make you reject a memoization optimization in code review?</p>
+        <p><span class="label">A:</span> If it is guarding cheap work, added without measurement, obscures code, or relies on unstable dependencies that invalidate it every render. Memoization should remove meaningful work, not add cognitive overhead for theoretical wins.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Q:</span> How would you explain stale closures to a junior developer?</p>
+        <p><span class="label">A:</span> A callback remembers variables from the render where it was created. If you later expect it to see newer values without updating its dependencies or using the right pattern, it can act on old data.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Q:</span> Why are selectors better than reading nested store paths directly in every component?</p>
+        <p><span class="label">A:</span> They centralize read logic, improve reuse, isolate store shape changes, and support memoization. Components should ask for domain data, not know too much about storage layout.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Q:</span> How would you describe Immer in one sentence?</p>
+        <p><span class="label">A:</span> Immer lets you write reducer logic in a mutating style while safely producing immutable next state behind the scenes.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Q:</span> What are the risks of using index as a React list key?</p>
+        <p><span class="label">A:</span> If list order changes, component identity shifts incorrectly, which can preserve the wrong local state or cause unnecessary DOM churn. Index keys are only acceptable for static, never-reordered lists.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Q:</span> How would you discuss localStorage in a system design interview?</p>
+        <p><span class="label">A:</span> As a browser persistence primitive suitable for lightweight local caching or user convenience, but not as a source of truth for multi-user, secure, or highly consistent systems.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Q:</span> What should a good loading state do?</p>
+        <p><span class="label">A:</span> Communicate that work is in progress, prevent broken interactions, preserve context where possible, and avoid visual jumps that confuse the user.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Q:</span> How do you evaluate whether Redux is overkill?</p>
+        <p><span class="label">A:</span> If the shared state is tiny, short-lived, or consumed by a narrow subtree, Redux can add indirection. If the feature requires centralized updates, async modeling, selector reuse, or debugging clarity, it is often justified.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Q:</span> What is the difference between derived state and duplicated state?</p>
+        <p><span class="label">A:</span> Derived state is computed from a source of truth when needed. Duplicated state stores the same information in multiple places, which creates synchronization bugs.</p>
+      </div>
+
+      <h2>13. How To Explain Your Project in an Interview</h2>
+      <p>
+        A strong answer is structured. Do not just list libraries. Explain the
+        problem, architectural choices, and tradeoffs.
+      </p>
+      <pre>I built a task management learning project in React and TypeScript over six structured days.
+I started with local state and controlled forms to reinforce data flow.
+Then I added Tailwind and reusable components while practicing memoization.
+After that I moved shared task state into Redux Toolkit with typed hooks and selectors.
+For Day 4, I introduced createAsyncThunk and modeled request status, loading, and error handling using an async local storage layer.
+For Day 5, I normalized the task state with entity adapter, split selectors and thunks into dedicated modules, and configured Redux DevTools tracing so the state transitions are easier to inspect.
+For Day 6, I added Vitest and React Testing Library, then wrote reducer tests, thunk tests with mocked storage calls, component tests, and a Redux + UI integration test for the task page.
+The main goal was not feature count; it was learning how state architecture and test strategy evolve together as complexity grows.</pre>
+
+      <h2>14. Red Flags Interviewers Notice</h2>
+      <div class="two-col">
+        <ul>
+          <li>Using <code>any</code> at critical boundaries.</li>
+          <li>Memoizing everything by default.</li>
+          <li>Confusing route state with application state.</li>
+          <li>Putting business logic in random components.</li>
+          <li>No loading or error states for async operations.</li>
+          <li>Using unstable keys in dynamic lists.</li>
+          <li>Duplicating derived state in multiple places.</li>
+          <li>Replacing whole entity collections for small mutations.</li>
+          <li>Choosing Redux before proving shared-state need.</li>
+          <li>Not being able to explain why a hook dependency exists.</li>
+          <li>Writing brittle tests that assert implementation details instead of behavior.</li>
+          <li>Using integration tests only and skipping focused unit tests for pure logic.</li>
+          <li>Talking only about syntax instead of tradeoffs.</li>
+        </ul>
+      </div>
+
+      <h2>15. Final Revision Checklist</h2>
+      <ul>
+        <li>Can you explain props, state, and controlled inputs clearly?</li>
+        <li>Can you describe render, commit, reconciliation, and keys?</li>
+        <li>Can you justify when to use <code>useMemo</code> or <code>useCallback</code>?</li>
+        <li>Can you explain why feature-based architecture scales better?</li>
+        <li>Can you describe store, slice, reducer, selector, and Immer?</li>
+        <li>Can you explain <code>createAsyncThunk</code> pending, fulfilled, and rejected?</li>
+        <li>Can you explain normalized state, IDs/entities, and entity adapter tradeoffs?</li>
+        <li>Can you explain why selectors form the read API for Redux state?</li>
+        <li>Can you explain how Redux DevTools helps validate architecture decisions?</li>
+        <li>Can you explain what reducers, thunks, component tests, and integration tests each prove?</li>
+        <li>Can you explain why mocking the API boundary improves determinism?</li>
+        <li>Can you explain how parameters and state move through your app?</li>
+        <li>Can you discuss tradeoffs like a senior engineer rather than just list APIs?</li>
+      </ul>
+
+      <p class="small">
+        Suggested next update after Day 6: selector-focused tests, RTK Query
+        tradeoffs, real HTTP integration boundaries, and end-to-end browser
+        coverage.
+      </p>
+    </main>
+  </body>
+</html>

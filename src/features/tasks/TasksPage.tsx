@@ -82,7 +82,7 @@ export default function TasksPage() {
         <header className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              React Refresh - Tasks Day 5
+              React Refresh - Tasks Day 6
             </h1>
 
             <p className="mt-2 text-sm text-gray-600">
@@ -90,8 +90,8 @@ export default function TasksPage() {
               Completed: <b>{stats.completed}</b>
             </p>
             <p className="mt-2 text-xs uppercase tracking-[0.2em] text-teal-700">
-              Day 5 architecture: entity adapter, memoized selectors, focused
-              thunks
+              Day 6 testing: reducers, thunks, component behavior, and
+              Redux-driven UI flows
             </p>
           </div>
 
@@ -138,8 +138,8 @@ export default function TasksPage() {
         </main>
 
         <footer className="mt-6 text-sm text-gray-500">
-          Day 5 focus: normalized state, selector-driven rendering, Redux
-          DevTools visibility, and cleaner async boundaries.
+          Day 6 focus: reducer coverage, thunk behavior, mocked API boundaries,
+          and Redux + UI integration confidence.
           {lastMutation && (
             <span className="block mt-2">
               Last mutation: <b>{lastMutation}</b>
