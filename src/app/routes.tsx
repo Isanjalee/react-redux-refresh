@@ -1,16 +1,26 @@
-import { Suspense } from "react";
-import PageLoader from "../shared/components/PageLoader";
-import { tasksRoute } from "../features/tasks/routes";
+import { Navigate, createBrowserRouter } from "react-router-dom";
+import App from "./App";
+import { tasksRoutePath, tasksRoutes } from "../features/tasks/routes";
 
-function withRouteFallback(element: React.JSX.Element, label: string) {
-  return (
-    <Suspense fallback={<PageLoader label={label} />}>
-      {element}
-    </Suspense>
-  );
-}
-
-export const appRoutes = {
-  tasks: tasksRoute.path,
-  tasksElement: withRouteFallback(tasksRoute.element, tasksRoute.loadingLabel),
+export const appRoutePaths = {
+  home: "/",
+  tasks: tasksRoutePath,
 };
+
+export const appRouter = createBrowserRouter([
+  {
+    path: appRoutePaths.home,
+    element: <App />,
+    children: [
+      {
+        index: true,
+        element: <Navigate to={appRoutePaths.tasks} replace />,
+      },
+      ...tasksRoutes,
+      {
+        path: "*",
+        element: <Navigate to={appRoutePaths.tasks} replace />,
+      },
+    ],
+  },
+]);
