@@ -13,7 +13,7 @@ export function createAppStore(preloadedState?: Partial<RootState>) {
     preloadedState,
     devTools: import.meta.env.DEV
       ? {
-          name: "React Redux Refresh - Day 6",
+          name: "React Redux Refresh - Day 7",
           trace: true,
           traceLimit: 25,
         }
@@ -26,3 +26,4 @@ export const store = createAppStore();
 // Types for TS
 export type AppStore = ReturnType<typeof createAppStore>;
 export type AppDispatch = AppStore["dispatch"];
+

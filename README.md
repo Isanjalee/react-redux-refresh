@@ -1,6 +1,6 @@
 # React Redux Refresh
 
-A structured React + TypeScript learning project focused on building a small task app while revisiting modern React patterns step by step.
+A structured React + TypeScript learning project focused on building a task app while revisiting modern React patterns step by step and evolving it toward production-shaped frontend architecture.
 
 ## Tech Stack
 
@@ -10,6 +10,8 @@ A structured React + TypeScript learning project focused on building a small tas
 - Tailwind CSS v3
 - React Router
 - Redux Toolkit
+- Vitest
+- React Testing Library
 - ESLint
 
 ## Project Goals
@@ -28,6 +30,11 @@ This repository is used to practice:
 - Reducer and thunk testing
 - React Testing Library workflows
 - Redux + UI integration testing
+- Route-level code splitting
+- Lazy loading with Suspense
+- Feature-level routing
+- Bundle optimization and profiling
+- Advanced component architecture
 
 ## Project Structure
 
@@ -45,26 +52,32 @@ src/
 |       |   |-- TaskForm.test.tsx
 |       |   |-- TaskForm.tsx
 |       |   |-- TaskItem.tsx
-|       |   `-- TaskList.tsx
+|       |   |-- TaskList.tsx
+|       |   `-- TasksInsightsPanel.tsx
 |       |-- storage.ts
 |       |-- tasksAdapter.ts
 |       |-- TasksPage.integration.test.tsx
-|       |-- tasksSelectors.ts
 |       |-- TasksPage.tsx
+|       |-- routes.tsx
+|       |-- tasksSelectors.ts
 |       |-- tasksSlice.test.ts
 |       |-- tasksSlice.ts
 |       |-- tasksThunks.test.ts
 |       |-- tasksThunks.ts
 |       |-- taskUtils.ts
 |       `-- types.ts
+|-- shared/
+|   |-- components/
+|   |   |-- AppShell.tsx
+|   |   |-- Button.tsx
+|   |   |-- LoadingPanel.tsx
+|   |   |-- PageLoader.tsx
+|   |   `-- RenderProfiler.tsx
+|   `-- hooks/
+|       `-- useLocalStorageState.ts
 |-- test/
 |   |-- setup.ts
 |   `-- test-utils.tsx
-|-- shared/
-|   |-- components/
-|   |   `-- Button.tsx
-|   `-- hooks/
-|       `-- useLocalStorageState.ts
 |-- index.css
 `-- main.tsx
 ```
@@ -125,6 +138,17 @@ src/
 - Integration testing Redux + UI together
 - Vitest + React Testing Library setup
 
+### Day 7
+
+- Route-level code splitting
+- Lazy loading with `React.lazy`
+- `Suspense` route fallbacks
+- Feature-level routing with `createBrowserRouter`
+- Shared app shell architecture
+- Bundle optimization with deferred secondary UI
+- Dev-only render profiling with `React.Profiler`
+- Advanced component boundaries for route and feature shells
+
 ## Current Status
 
 - Day 1 complete
@@ -133,13 +157,15 @@ src/
 - Day 4 complete
 - Day 5 complete
 - Day 6 complete
+- Day 7 complete
 
 ## Next Improvements
 
+- Route prefetching and smarter loading heuristics
 - RTK Query comparison
-- Middleware exploration
-- E2E coverage for full browser flows
 - Real HTTP API integration instead of localStorage service mocks
+- Profiler-driven tuning against larger data sets
+- E2E coverage for full browser flows
 
 ## Installation
 
@@ -147,8 +173,9 @@ src/
 npm install
 npm run dev
 npm test
+npm run build
 ```
 
 ## Purpose
 
-This project is part of a structured React refresh journey aimed at strengthening fundamentals and improving production-oriented frontend architecture.
+This project is part of a structured React refresh journey aimed at strengthening fundamentals and practicing the kinds of routing, state, testing, and performance decisions used in production frontend applications.

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>React Redux Refresh - Day 1 to Day 6 Interview Guide</title>
+    <title>React Redux Refresh - Day 1 to Day 7 Interview Guide</title>
     <style>
       :root {
         --bg: #f5f1e8;
@@ -196,18 +196,20 @@
     <main class="page">
       <section class="hero">
         <p class="eyebrow">React Redux Refresh</p>
-        <h1>Day 1 to Day 6 Interview Guide</h1>
+        <h1>Day 1 to Day 7 Interview Guide</h1>
         <p class="summary">
           A printable study guide built from your full progress so far, from
-          Day 1 through Day 6, March 12, 2026. It covers React fundamentals,
+          Day 1 through Day 7, March 14, 2026. It covers React fundamentals,
           TypeScript, routing, local state, performance, Tailwind, feature
           architecture, Redux Toolkit, async thunks, normalized state,
-          selectors, Redux DevTools, and testing strategy.
+          selectors, Redux DevTools, testing strategy, and production frontend
+          architecture patterns.
         </p>
         <p class="small">
-          Coverage: Day 1, Day 2, Day 3, Day 4, Day 5, and Day 6 work on
-          Redux testing, mocked API boundaries, and UI integration confidence.
-          Update this file after each new learning day and regenerate the PDF.
+          Coverage: Day 1, Day 2, Day 3, Day 4, Day 5, Day 6, and Day 7 work on
+          production-style routing, code splitting, suspense boundaries, and
+          profiling-aware component architecture. Update this file after each
+          new learning day and regenerate the PDF.
         </p>
       </section>
 
@@ -233,6 +235,7 @@
             <li>Why async state needs loading and error modeling.</li>
             <li>How Redux Toolkit reduces accidental complexity.</li>
             <li>How to test reducers, thunks, and Redux-connected UI separately.</li>
+            <li>How route boundaries, lazy loading, and profiling support production frontend scale.</li>
           </ul>
         </div>
       </div>
@@ -276,6 +279,11 @@
             <td>Day 6</td>
             <td>Testing Redux and UI</td>
             <td>Added Vitest and React Testing Library, wrote reducer and thunk tests, mocked the storage API boundary, tested form behavior, and verified Redux + UI flows together.</td>
+          </tr>
+          <tr>
+            <td>Day 7</td>
+            <td>Production frontend architecture</td>
+            <td>Refactored routing around feature-level route objects, added lazy route and panel loading with Suspense, introduced a shared app shell, deferred non-critical task views, and added dev-only profiling boundaries.</td>
           </tr>
         </tbody>
       </table>
@@ -737,7 +745,96 @@ Selector output changes
         <p><span class="label">Answer:</span> Test behavior instead of implementation details. Prefer user-visible queries, keep mocks at clear boundaries, avoid asserting incidental markup, and reserve deep internal assertions for pure units like reducers or selector logic.</p>
       </div>
 
-      <h2>12. Senior Frontend Interview Questions and Answers</h2>
+      
+      <h2>12. Day 7 Production Frontend Architecture</h2>
+      <h3>What Changed in the Task App</h3>
+      <p>
+        Day 7 moved the project from a small learning app toward a more
+        production-shaped frontend architecture. The changes were focused on
+        delivery boundaries, route ownership, and measurable rendering cost.
+      </p>
+      <ul>
+        <li><code>app/routes.tsx</code> now composes a real router with <code>createBrowserRouter</code>.</li>
+        <li><code>features/tasks/routes.tsx</code> owns the task feature route definition.</li>
+        <li><code>App.tsx</code> became a shell with <code>Outlet</code> instead of manually embedding pages.</li>
+        <li><code>PageLoader.tsx</code> and <code>LoadingPanel.tsx</code> provide reusable loading boundaries.</li>
+        <li><code>TasksPage.tsx</code> defers non-critical list updates and lazy-loads the insights panel.</li>
+        <li><code>RenderProfiler.tsx</code> adds dev-only <code>React.Profiler</code> measurements without polluting tests.</li>
+      </ul>
+
+      <h3>Why Code Splitting Matters</h3>
+      <p>
+        Code splitting is not just a build trick. It is an architectural
+        decision about what the browser must pay for up front and what can wait
+        until a route or secondary UI is actually needed. In this project, the
+        task page and the insights panel now load as separate chunks instead of
+        being folded into the first app bundle.
+      </p>
+
+      <h3>Lazy Loading and Suspense</h3>
+      <p>
+        <code>React.lazy</code> delays module loading until the component is
+        requested, and <code>Suspense</code> gives the UI a controlled fallback
+        while that code arrives. Senior-level reasoning here is about choosing
+        loading boundaries intentionally so the user sees continuity instead of
+        jarring blank screens.
+      </p>
+
+      <pre>navigate to route
+  -> router matches feature route
+  -> lazy component chunk requested
+  -> Suspense fallback renders
+  -> chunk resolves
+  -> feature screen mounts</pre>
+
+      <h3>Feature-Level Routing</h3>
+      <p>
+        Feature-level routing means the feature exports its own route objects
+        while the app composes them into the top-level router. That keeps route
+        ownership closer to the feature and scales better when more domains are
+        added later.
+      </p>
+
+      <h3>Performance Profiling and Deferred UI</h3>
+      <p>
+        Production architecture should be observable, not just theoretically
+        optimized. The project now uses a dev-only profiler wrapper and
+        <code>useDeferredValue</code> for the task list so expensive or secondary
+        rendering paths can be inspected and softened before they become user
+        complaints.
+      </p>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> What is the difference between code splitting and lazy loading?</p>
+        <p><span class="label">Answer:</span> Code splitting is the build-time outcome of breaking code into separate chunks. Lazy loading is the runtime strategy that decides when a chunk should be requested. They are related, but not the same layer of the system.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> Why use <code>Suspense</code> around a route boundary?</p>
+        <p><span class="label">Answer:</span> Because route transitions are natural loading boundaries. Wrapping a route in <code>Suspense</code> lets the app show a stable fallback while the lazy route chunk loads, which is cleaner than letting the screen flash empty or hand-rolling loading logic in every page.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> What is the benefit of feature-level routing?</p>
+        <p><span class="label">Answer:</span> It keeps route ownership close to the feature, reduces top-level router sprawl, and makes it easier to add or remove feature screens without forcing the whole app router file to become a dumping ground.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> Why defer a value like visible task IDs?</p>
+        <p><span class="label">Answer:</span> Because the user interaction can stay responsive while React prepares a lower-priority visual update. It is useful when a derived list may be large or when you want filter changes to feel smoother without changing the source of truth.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> Why add profiling hooks in development?</p>
+        <p><span class="label">Answer:</span> Profiling turns performance conversations from guesswork into measurement. It helps you see whether memoization, deferred rendering, or route boundaries are actually reducing work instead of just adding complexity.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> What makes component architecture "advanced" in this project?</p>
+        <p><span class="label">Answer:</span> The app now separates shell layout, route boundaries, loading primitives, feature orchestration, and secondary insight panels into distinct layers. That separation is what makes scaling easier, not just the number of files.</p>
+      </div>
+
+      <h2>13. Senior Frontend Interview Questions and Answers</h2>
 
       <div class="qa">
         <p><span class="label">Q:</span> How do you decide whether state should live in a component, context, or Redux?</p>
@@ -789,21 +886,22 @@ Selector output changes
         <p><span class="label">A:</span> Derived state is computed from a source of truth when needed. Duplicated state stores the same information in multiple places, which creates synchronization bugs.</p>
       </div>
 
-      <h2>13. How To Explain Your Project in an Interview</h2>
+      <h2>14. How To Explain Your Project in an Interview</h2>
       <p>
         A strong answer is structured. Do not just list libraries. Explain the
         problem, architectural choices, and tradeoffs.
       </p>
-      <pre>I built a task management learning project in React and TypeScript over six structured days.
+      <pre>I built a task management learning project in React and TypeScript over seven structured days.
 I started with local state and controlled forms to reinforce data flow.
 Then I added Tailwind and reusable components while practicing memoization.
 After that I moved shared task state into Redux Toolkit with typed hooks and selectors.
 For Day 4, I introduced createAsyncThunk and modeled request status, loading, and error handling using an async local storage layer.
 For Day 5, I normalized the task state with entity adapter, split selectors and thunks into dedicated modules, and configured Redux DevTools tracing so the state transitions are easier to inspect.
 For Day 6, I added Vitest and React Testing Library, then wrote reducer tests, thunk tests with mocked storage calls, component tests, and a Redux + UI integration test for the task page.
-The main goal was not feature count; it was learning how state architecture and test strategy evolve together as complexity grows.</pre>
+For Day 7, I refactored the app around feature-level routing, lazy-loaded route and secondary panel chunks, introduced a shared app shell, and added profiling-aware render boundaries to make performance decisions more observable.
+The main goal was not feature count; it was learning how state architecture, testing, and delivery boundaries evolve together as complexity grows.</pre>
 
-      <h2>14. Red Flags Interviewers Notice</h2>
+      <h2>15. Red Flags Interviewers Notice</h2>
       <div class="two-col">
         <ul>
           <li>Using <code>any</code> at critical boundaries.</li>
@@ -819,10 +917,11 @@ The main goal was not feature count; it was learning how state architecture and 
           <li>Writing brittle tests that assert implementation details instead of behavior.</li>
           <li>Using integration tests only and skipping focused unit tests for pure logic.</li>
           <li>Talking only about syntax instead of tradeoffs.</li>
+          <li>Adding lazy loading everywhere without choosing sensible loading boundaries.</li>
         </ul>
       </div>
 
-      <h2>15. Final Revision Checklist</h2>
+      <h2>16. Final Revision Checklist</h2>
       <ul>
         <li>Can you explain props, state, and controlled inputs clearly?</li>
         <li>Can you describe render, commit, reconciliation, and keys?</li>
@@ -835,14 +934,17 @@ The main goal was not feature count; it was learning how state architecture and 
         <li>Can you explain how Redux DevTools helps validate architecture decisions?</li>
         <li>Can you explain what reducers, thunks, component tests, and integration tests each prove?</li>
         <li>Can you explain why mocking the API boundary improves determinism?</li>
+        <li>Can you explain how code splitting, lazy loading, and Suspense work together?</li>
+        <li>Can you explain why feature-level routing scales better than one giant router file?</li>
+        <li>Can you explain when deferred rendering helps and when it is unnecessary?</li>
         <li>Can you explain how parameters and state move through your app?</li>
         <li>Can you discuss tradeoffs like a senior engineer rather than just list APIs?</li>
       </ul>
 
       <p class="small">
-        Suggested next update after Day 6: selector-focused tests, RTK Query
-        tradeoffs, real HTTP integration boundaries, and end-to-end browser
-        coverage.
+        Suggested next update after Day 7: route prefetching, RTK Query tradeoffs,
+        real HTTP integration boundaries, profiler-driven tuning on larger data
+        sets, and end-to-end browser coverage.
       </p>
     </main>
   </body>
