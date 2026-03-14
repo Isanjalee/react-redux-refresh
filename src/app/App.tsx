@@ -1,5 +1,10 @@
 import { Outlet } from "react-router-dom";
+import AppShell from "../shared/components/AppShell";
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <AppShell>
+      <Outlet />
+    </AppShell>
+  );
 }
