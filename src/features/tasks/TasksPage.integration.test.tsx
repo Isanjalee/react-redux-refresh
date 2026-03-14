@@ -78,6 +78,8 @@ describe("TasksPage integration", () => {
       ).toBeChecked();
     });
 
-    expect(screen.getByText(/Last mutation:/)).toHaveTextContent("toggleTask");
+    expect(await screen.findByText(/Last mutation:/)).toHaveTextContent(
+      "toggleTask",
+    );
   });
 });

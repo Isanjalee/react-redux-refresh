@@ -1,9 +1,10 @@
-import { useCallback, useEffect } from "react";
+import { lazy, Suspense, useCallback, useDeferredValue, useEffect } from "react";
 import TaskForm from "./components/TaskForm";
 import TaskFilters from "./components/TaskFilters";
 import TaskList from "./components/TaskList";
 import Button from "../../shared/components/Button";
 import LoadingPanel from "../../shared/components/LoadingPanel";
+import RenderProfiler from "../../shared/components/RenderProfiler";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { setFilter } from "./tasksSlice";
 import {
@@ -25,10 +26,13 @@ import {
   toggleTask,
 } from "./tasksThunks";
 
+const TasksInsightsPanel = lazy(() => import("./components/TasksInsightsPanel"));
+
 export default function TasksPage() {
   const dispatch = useAppDispatch();
   const filter = useAppSelector(selectTaskFilter);
   const visibleTaskIds = useAppSelector(selectVisibleTaskIds);
+  const deferredTaskIds = useDeferredValue(visibleTaskIds);
   const stats = useAppSelector(selectTaskStats);
   const isBusy = useAppSelector(selectIsTasksBusy);
   const canClearCompleted = useAppSelector(selectCanClearCompleted);
@@ -76,6 +80,7 @@ export default function TasksPage() {
   );
 
   const showInitialLoading = isBusy && !hasLoaded;
+  const isListDeferred = deferredTaskIds !== visibleTaskIds;
 
   return (
     <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
@@ -93,8 +98,8 @@ export default function TasksPage() {
             Completed: <b>{stats.completed}</b>
           </p>
           <p className="mt-2 text-xs uppercase tracking-[0.2em] text-teal-700">
-            Day 7 architecture: shared app shell, route-level boundaries, and
-            reusable loading states
+            Day 7 architecture: shared shell, lazy insights, deferred list rendering,
+            and profiling-friendly boundaries
           </p>
         </div>
 
@@ -126,7 +131,13 @@ export default function TasksPage() {
           </div>
         )}
 
-        <div className="mt-6">
+        <div className="mt-6 space-y-4">
+          {isListDeferred && !showInitialLoading && (
+            <div className="rounded-xl border border-teal-100 bg-teal-50 px-4 py-3 text-sm text-teal-800">
+              Updating the filtered task view...
+            </div>
+          )}
+
           {showInitialLoading ? (
             <LoadingPanel
               compact
@@ -134,30 +145,39 @@ export default function TasksPage() {
               description="Restoring the task workspace and synchronizing the first view."
             />
           ) : (
-            <TaskList
-              taskIds={visibleTaskIds}
-              onToggle={onToggle}
-              onDelete={onDelete}
-              disabled={isBusy}
-            />
+            <RenderProfiler id="TasksList">
+              <TaskList
+                taskIds={deferredTaskIds}
+                onToggle={onToggle}
+                onDelete={onDelete}
+                disabled={isBusy}
+              />
+            </RenderProfiler>
           )}
         </div>
       </main>
 
-      <footer className="mt-6 px-1 text-sm text-slate-500">
-        Day 7 focus: stronger route boundaries, reusable screen-level loading,
-        and a more production-shaped app shell.
-        {lastMutation && (
-          <span className="mt-2 block">
-            Last mutation: <b>{lastMutation}</b>
-          </span>
-        )}
-        {lastSyncedAt && (
-          <span className="mt-1 block">
-            Last sync: <b>{new Date(lastSyncedAt).toLocaleTimeString()}</b>
-          </span>
-        )}
-      </footer>
+      <Suspense
+        fallback={
+          <div className="mt-6 px-1">
+            <LoadingPanel
+              compact
+              title="Loading workspace insights"
+              description="Preparing sync and mutation metadata for this feature."
+            />
+          </div>
+        }
+      >
+        <RenderProfiler id="TasksInsightsPanel">
+          <TasksInsightsPanel
+            total={stats.total}
+            active={stats.active}
+            completed={stats.completed}
+            lastMutation={lastMutation}
+            lastSyncedAt={lastSyncedAt}
+          />
+        </RenderProfiler>
+      </Suspense>
     </div>
   );
 }
