@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>React Redux Refresh - Day 1 to Day 7 Interview Guide</title>
+    <title>React Redux Refresh - Day 1 to Day 8 Interview Guide</title>
     <style>
       :root {
         --bg: #f5f1e8;
@@ -196,20 +196,17 @@
     <main class="page">
       <section class="hero">
         <p class="eyebrow">React Redux Refresh</p>
-        <h1>Day 1 to Day 7 Interview Guide</h1>
+        <h1>Day 1 to Day 8 Interview Guide</h1>
         <p class="summary">
           A printable study guide built from your full progress so far, from
-          Day 1 through Day 7, March 14, 2026. It covers React fundamentals,
+          Day 1 through Day 8, March 15, 2026. It covers React fundamentals,
           TypeScript, routing, local state, performance, Tailwind, feature
           architecture, Redux Toolkit, async thunks, normalized state,
           selectors, Redux DevTools, testing strategy, and production frontend
           architecture patterns.
         </p>
         <p class="small">
-          Coverage: Day 1, Day 2, Day 3, Day 4, Day 5, Day 6, and Day 7 work on
-          production-style routing, code splitting, suspense boundaries, and
-          profiling-aware component architecture. Update this file after each
-          new learning day and regenerate the PDF.
+          Coverage: Day 1, Day 2, Day 3, Day 4, Day 5, Day 6, Day 7, plus Day 8 work on RTK Query, cache-aware data flows, auto-generated hooks, and leaner server-state architecture. Update this file after each new learning day and regenerate the PDF.
         </p>
       </section>
 
@@ -236,6 +233,7 @@
             <li>How Redux Toolkit reduces accidental complexity.</li>
             <li>How to test reducers, thunks, and Redux-connected UI separately.</li>
             <li>How route boundaries, lazy loading, and profiling support production frontend scale.</li>
+            <li>How RTK Query replaces repetitive async thunk boilerplate for server state.</li>
           </ul>
         </div>
       </div>
@@ -284,6 +282,11 @@
             <td>Day 7</td>
             <td>Production frontend architecture</td>
             <td>Refactored routing around feature-level route objects, added lazy route and panel loading with Suspense, introduced a shared app shell, deferred non-critical task views, and added dev-only profiling boundaries.</td>
+          </tr>
+          <tr>
+            <td>Day 8</td>
+            <td>RTK Query for server state</td>
+            <td>Replaced manual thunk-based fetching and mutations with an RTK Query API slice, generated hooks, cache invalidation, and endpoint-focused tests.</td>
           </tr>
         </tbody>
       </table>
@@ -634,7 +637,7 @@ Selector reads derived result
         state transitions, and read logic:
       </p>
       <ul>
-        <li><code>tasksThunks.ts</code> handles async orchestration and error translation.</li>
+        <li><code>tasksApi.ts</code> now handles server-state reads, writes, and cache invalidation.</li>
         <li><code>tasksSlice.ts</code> handles state transitions.</li>
         <li><code>tasksSelectors.ts</code> handles derived read logic.</li>
         <li><code>storage.ts</code> acts as the persistence boundary.</li>
@@ -683,8 +686,8 @@ Selector reads derived result
         now has four complementary test layers:
       </p>
       <ul>
-        <li><code>tasksSlice.test.ts</code> verifies pure reducer transitions such as filter changes, fulfilled fetches, and rejected mutations.</li>
-        <li><code>tasksThunks.test.ts</code> verifies async thunk orchestration, including success paths, condition guards, and rejected payload handling.</li>
+        <li><code>tasksSlice.test.ts</code> verifies pure reducer transitions such as filter changes and query hydration.</li>
+        <li><code>tasksApi.test.ts</code> verifies endpoint behavior, cache invalidation, and RTK Query query and mutation flows.</li>
         <li><code>TaskForm.test.tsx</code> verifies component behavior such as validation, trimmed input submission, and field reset behavior.</li>
         <li><code>TasksPage.integration.test.tsx</code> verifies the full Redux-connected screen: initial loading, fetched tasks, adding a task, toggling a task, and last-mutation UI updates.</li>
       </ul>
@@ -699,10 +702,9 @@ Selector reads derived result
       </p>
 
       <pre>UI event
-  -> dispatch(addTask or toggleTask thunk)
-Thunk calls mocked storage boundary
-  -> mocked success or failure response
-Reducer handles pending / fulfilled / rejected
+  -> generated mutation hook or dispatched action runs
+Mocked storage boundary responds
+  -> query cache or slice state updates
 Selector output changes
   -> component re-renders with updated UI</pre>
 
@@ -737,7 +739,7 @@ Selector output changes
 
       <div class="qa">
         <p><span class="label">Interview question:</span> In this task app, what does the Day 6 integration test actually prove?</p>
-        <p><span class="label">Answer:</span> It proves that the page dispatches the initial fetch, renders loading and fetched task data, submits a new task through the thunk path, toggles an existing task, and reflects the last mutation in the UI. That is stronger evidence than checking one reducer or one component in isolation.</p>
+        <p><span class="label">Answer:</span> It proves that the page loads task data, renders loading and fetched results, submits a new task through the connected Redux and RTK Query flow, toggles an existing task, and reflects the last mutation in the UI. That is stronger evidence than checking one reducer or one component in isolation.</p>
       </div>
 
       <div class="qa">
@@ -834,7 +836,89 @@ Selector output changes
         <p><span class="label">Answer:</span> The app now separates shell layout, route boundaries, loading primitives, feature orchestration, and secondary insight panels into distinct layers. That separation is what makes scaling easier, not just the number of files.</p>
       </div>
 
-      <h2>13. Senior Frontend Interview Questions and Answers</h2>
+      
+      <h2>13. Day 8 RTK Query for Server State</h2>
+      <h3>Why RTK Query Exists</h3>
+      <p>
+        Manual thunk handling works, but it tends to repeat the same patterns:
+        request lifecycle flags, duplicate loading state, error translation,
+        cache refresh logic, and hand-written orchestration between reads and
+        writes. RTK Query exists to standardize those server-state concerns so
+        the feature code can focus more on domain behavior and less on plumbing.
+      </p>
+
+      <h3>What Changed in the Task App</h3>
+      <ul>
+        <li><code>tasksApi.ts</code> now owns the feature API slice.</li>
+        <li><code>getTasks</code> is modeled as a query.</li>
+        <li><code>addTask</code>, <code>toggleTask</code>, <code>deleteTask</code>, and <code>clearCompleted</code> are modeled as mutations.</li>
+        <li>Cache tags are used so writes invalidate the task list automatically.</li>
+        <li><code>TasksPage.tsx</code> now reads and writes through generated hooks.</li>
+        <li><code>tasksApi.test.ts</code> verifies query fetching, mutation execution, and invalidation behavior directly.</li>
+      </ul>
+
+      <h3>Queries vs Mutations</h3>
+      <p>
+        A query reads data and is cacheable. A mutation changes data and usually
+        invalidates one or more cached queries so fresh data is fetched again.
+        That distinction is one of the main conceptual upgrades over a generic
+        thunk-based async function.
+      </p>
+
+      <pre>useGetTasksQuery()
+  -> cached task list
+useAddTaskMutation()
+  -> write to storage layer
+  -> invalidate Task LIST tag
+  -> getTasks refetches automatically</pre>
+
+      <h3>Caching and Invalidation</h3>
+      <p>
+        RTK Query uses cache tags to understand which reads are affected by a
+        write. In this project, task mutations invalidate the task list tag so
+        the feature does not need manual refetch dispatches after every add,
+        toggle, delete, or clear-completed action.
+      </p>
+
+      <h3>Loading and Error States</h3>
+      <p>
+        The task page now gets fetch loading and fetch errors from the RTK Query
+        hooks, while keeping only the local mutation metadata that still serves
+        the UI. This is a cleaner separation between server-state lifecycle and
+        feature-specific view metadata.
+      </p>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> What is RTK Query?</p>
+        <p><span class="label">Answer:</span> RTK Query is the data fetching and caching layer built into Redux Toolkit. It standardizes queries, mutations, caching, invalidation, loading state, and generated hooks for server-state workflows.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> Why use RTK Query instead of manual thunks?</p>
+        <p><span class="label">Answer:</span> Because it removes repetitive async boilerplate, centralizes cache behavior, gives you generated hooks, and handles refetching through invalidation rules instead of forcing every feature to reinvent those patterns manually.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> What is the difference between a query and a mutation in RTK Query?</p>
+        <p><span class="label">Answer:</span> A query reads and caches data. A mutation performs a write and often invalidates cached queries so related data can be refreshed automatically.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> What problem do cache tags solve?</p>
+        <p><span class="label">Answer:</span> They let the data layer know which cached results are stale after a mutation. That means the app can refetch the right queries automatically instead of dispatching manual refresh logic after every write.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> What is an auto-generated hook in RTK Query?</p>
+        <p><span class="label">Answer:</span> It is a React hook generated from an endpoint definition, such as <code>useGetTasksQuery</code> or <code>useAddTaskMutation</code>. Those hooks expose data, loading flags, errors, and trigger functions without hand-written wrapper code.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> How does RTK Query differ from thunks conceptually?</p>
+        <p><span class="label">Answer:</span> Thunks are a general async orchestration tool. RTK Query is a specialized server-state layer with opinions about caching, invalidation, subscriptions, and generated hooks. Thunks can still be useful, but RTK Query is usually a better fit for standard CRUD-style data fetching.</p>
+      </div>
+
+      <h2>14. Senior Frontend Interview Questions and Answers</h2>
 
       <div class="qa">
         <p><span class="label">Q:</span> How do you decide whether state should live in a component, context, or Redux?</p>
@@ -886,22 +970,23 @@ Selector output changes
         <p><span class="label">A:</span> Derived state is computed from a source of truth when needed. Duplicated state stores the same information in multiple places, which creates synchronization bugs.</p>
       </div>
 
-      <h2>14. How To Explain Your Project in an Interview</h2>
+      <h2>15. How To Explain Your Project in an Interview</h2>
       <p>
         A strong answer is structured. Do not just list libraries. Explain the
         problem, architectural choices, and tradeoffs.
       </p>
-      <pre>I built a task management learning project in React and TypeScript over seven structured days.
+      <pre>I built a task management learning project in React and TypeScript over eight structured days.
 I started with local state and controlled forms to reinforce data flow.
 Then I added Tailwind and reusable components while practicing memoization.
 After that I moved shared task state into Redux Toolkit with typed hooks and selectors.
 For Day 4, I introduced createAsyncThunk and modeled request status, loading, and error handling using an async local storage layer.
 For Day 5, I normalized the task state with entity adapter, split selectors and thunks into dedicated modules, and configured Redux DevTools tracing so the state transitions are easier to inspect.
-For Day 6, I added Vitest and React Testing Library, then wrote reducer tests, thunk tests with mocked storage calls, component tests, and a Redux + UI integration test for the task page.
+For Day 6, I added Vitest and React Testing Library, then wrote reducer tests, async-flow tests, component tests, and a Redux + UI integration test for the task page.
 For Day 7, I refactored the app around feature-level routing, lazy-loaded route and secondary panel chunks, introduced a shared app shell, and added profiling-aware render boundaries to make performance decisions more observable.
-The main goal was not feature count; it was learning how state architecture, testing, and delivery boundaries evolve together as complexity grows.</pre>
+For Day 8, I replaced manual thunk-based fetching and mutations with RTK Query, using an API slice, generated hooks, cache invalidation, and endpoint-focused tests to simplify server-state handling.
+The main goal was not feature count; it was learning how state architecture, testing, delivery boundaries, and server-state tooling evolve together as complexity grows.</pre>
 
-      <h2>15. Red Flags Interviewers Notice</h2>
+      <h2>16. Red Flags Interviewers Notice</h2>
       <div class="two-col">
         <ul>
           <li>Using <code>any</code> at critical boundaries.</li>
@@ -918,10 +1003,11 @@ The main goal was not feature count; it was learning how state architecture, tes
           <li>Using integration tests only and skipping focused unit tests for pure logic.</li>
           <li>Talking only about syntax instead of tradeoffs.</li>
           <li>Adding lazy loading everywhere without choosing sensible loading boundaries.</li>
+          <li>Keeping manual thunk boilerplate after RTK Query already owns the server-state workflow.</li>
         </ul>
       </div>
 
-      <h2>16. Final Revision Checklist</h2>
+      <h2>17. Final Revision Checklist</h2>
       <ul>
         <li>Can you explain props, state, and controlled inputs clearly?</li>
         <li>Can you describe render, commit, reconciliation, and keys?</li>
@@ -937,14 +1023,16 @@ The main goal was not feature count; it was learning how state architecture, tes
         <li>Can you explain how code splitting, lazy loading, and Suspense work together?</li>
         <li>Can you explain why feature-level routing scales better than one giant router file?</li>
         <li>Can you explain when deferred rendering helps and when it is unnecessary?</li>
+        <li>Can you explain what RTK Query is and why it exists?</li>
+        <li>Can you explain the difference between a query and a mutation?</li>
+        <li>Can you explain how caching and invalidation work in RTK Query?</li>
+        <li>Can you explain how auto-generated hooks reduce boilerplate?</li>
         <li>Can you explain how parameters and state move through your app?</li>
         <li>Can you discuss tradeoffs like a senior engineer rather than just list APIs?</li>
       </ul>
 
       <p class="small">
-        Suggested next update after Day 7: route prefetching, RTK Query tradeoffs,
-        real HTTP integration boundaries, profiler-driven tuning on larger data
-        sets, and end-to-end browser coverage.
+        Suggested next update after Day 8: optimistic updates, real HTTP transport with fetchBaseQuery, route prefetching, server-backed pagination, and end-to-end browser coverage.
       </p>
     </main>
   </body>

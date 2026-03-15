@@ -114,8 +114,8 @@ export default function TasksPage() {
             Completed: <b>{stats.completed}</b>
           </p>
           <p className="mt-2 text-xs uppercase tracking-[0.2em] text-teal-700">
-            Day 7 architecture: shared shell, lazy insights, deferred list rendering,
-            and profiling-friendly boundaries
+            Day 8 architecture: RTK Query reads and writes, cache invalidation,
+            generated hooks, and leaner async state handling
           </p>
         </div>
 

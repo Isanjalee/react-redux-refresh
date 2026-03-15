@@ -10,6 +10,7 @@ A structured React + TypeScript learning project focused on building a task app 
 - Tailwind CSS v3
 - React Router
 - Redux Toolkit
+- RTK Query
 - Vitest
 - React Testing Library
 - ESLint
@@ -35,6 +36,9 @@ This repository is used to practice:
 - Feature-level routing
 - Bundle optimization and profiling
 - Advanced component architecture
+- RTK Query queries and mutations
+- Caching and invalidation strategies
+- Auto-generated hook workflows
 
 ## Project Structure
 
@@ -56,14 +60,14 @@ src/
 |       |   `-- TasksInsightsPanel.tsx
 |       |-- storage.ts
 |       |-- tasksAdapter.ts
+|       |-- tasksApi.test.ts
+|       |-- tasksApi.ts
 |       |-- TasksPage.integration.test.tsx
 |       |-- TasksPage.tsx
 |       |-- routes.tsx
 |       |-- tasksSelectors.ts
 |       |-- tasksSlice.test.ts
 |       |-- tasksSlice.ts
-|       |-- tasksThunks.test.ts
-|       |-- tasksThunks.ts
 |       |-- taskUtils.ts
 |       `-- types.ts
 |-- shared/
@@ -149,6 +153,17 @@ src/
 - Dev-only render profiling with `React.Profiler`
 - Advanced component boundaries for route and feature shells
 
+### Day 8
+
+- RTK Query API slice setup
+- Queries vs mutations
+- Caching and invalidation
+- Auto-generated data hooks
+- Query-driven loading and error handling
+- Replacing manual async thunk reads and writes
+- Leaner async state architecture
+- RTK Query endpoint testing
+
 ## Current Status
 
 - Day 1 complete
@@ -158,12 +173,13 @@ src/
 - Day 5 complete
 - Day 6 complete
 - Day 7 complete
+- Day 8 complete
 
 ## Next Improvements
 
+- Real HTTP API integration instead of local storage base queries
+- Optimistic updates for mutations
 - Route prefetching and smarter loading heuristics
-- RTK Query comparison
-- Real HTTP API integration instead of localStorage service mocks
 - Profiler-driven tuning against larger data sets
 - E2E coverage for full browser flows
 
@@ -178,4 +194,4 @@ npm run build
 
 ## Purpose
 
-This project is part of a structured React refresh journey aimed at strengthening fundamentals and practicing the kinds of routing, state, testing, and performance decisions used in production frontend applications.
+This project is part of a structured React refresh journey aimed at strengthening fundamentals and practicing the kinds of routing, state, testing, caching, and performance decisions used in production frontend applications.
