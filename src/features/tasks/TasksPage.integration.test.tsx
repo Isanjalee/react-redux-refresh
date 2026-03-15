@@ -4,10 +4,13 @@ import { describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../test/test-utils";
 import TasksPage from "./TasksPage";
 import {
+  clearStoredCompletedTasks,
   createStoredTask,
+  deleteStoredTask,
   fetchStoredTasks,
   toggleStoredTask,
 } from "./storage";
+import type { Task } from "./types";
 
 vi.mock("./storage", () => ({
   fetchStoredTasks: vi.fn(),
@@ -20,10 +23,12 @@ vi.mock("./storage", () => ({
 const mockedFetchStoredTasks = vi.mocked(fetchStoredTasks);
 const mockedCreateStoredTask = vi.mocked(createStoredTask);
 const mockedToggleStoredTask = vi.mocked(toggleStoredTask);
+const mockedDeleteStoredTask = vi.mocked(deleteStoredTask);
+const mockedClearStoredCompletedTasks = vi.mocked(clearStoredCompletedTasks);
 
 describe("TasksPage integration", () => {
   it("loads tasks and lets the user add and toggle them", async () => {
-    mockedFetchStoredTasks.mockResolvedValue([
+    let tasks: Task[] = [
       {
         id: "t1",
         title: "Write reducer tests",
@@ -36,20 +41,47 @@ describe("TasksPage integration", () => {
         completed: true,
         createdAt: 100,
       },
-    ]);
+    ];
 
-    mockedCreateStoredTask.mockResolvedValue({
-      id: "t3",
-      title: "Ship Day 6",
-      completed: false,
-      createdAt: 300,
+    mockedFetchStoredTasks.mockImplementation(async () => tasks);
+
+    mockedCreateStoredTask.mockImplementation(async (title: string) => {
+      const nextTask: Task = {
+        id: "t3",
+        title,
+        completed: false,
+        createdAt: 300,
+      };
+      tasks = [nextTask, ...tasks];
+      return nextTask;
     });
 
-    mockedToggleStoredTask.mockResolvedValue({
-      id: "t1",
-      title: "Write reducer tests",
-      completed: true,
-      createdAt: 200,
+    mockedToggleStoredTask.mockImplementation(async (id: string) => {
+      let updatedTask: Task | undefined;
+      tasks = tasks.map((task) => {
+        if (task.id !== id) return task;
+        updatedTask = { ...task, completed: !task.completed };
+        return updatedTask;
+      });
+
+      if (!updatedTask) {
+        throw new Error("Task not found");
+      }
+
+      return updatedTask;
+    });
+
+    mockedDeleteStoredTask.mockImplementation(async (id: string) => {
+      tasks = tasks.filter((task) => task.id !== id);
+      return id;
+    });
+
+    mockedClearStoredCompletedTasks.mockImplementation(async () => {
+      const removedIds = tasks
+        .filter((task) => task.completed)
+        .map((task) => task.id);
+      tasks = tasks.filter((task) => !task.completed);
+      return removedIds;
     });
 
     const user = userEvent.setup();

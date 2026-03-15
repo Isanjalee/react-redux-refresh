@@ -6,7 +6,13 @@ import Button from "../../shared/components/Button";
 import LoadingPanel from "../../shared/components/LoadingPanel";
 import RenderProfiler from "../../shared/components/RenderProfiler";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { useGetTasksQuery } from "./tasksApi";
+import {
+  useAddTaskMutation,
+  useClearCompletedMutation,
+  useDeleteTaskMutation,
+  useGetTasksQuery,
+  useToggleTaskMutation,
+} from "./tasksApi";
 import { hydrateTasksFromQuery, setFilter } from "./tasksSlice";
 import {
   selectCanClearCompleted,
@@ -19,12 +25,6 @@ import {
   selectTaskStats,
   selectVisibleTaskIds,
 } from "./tasksSelectors";
-import {
-  addTask,
-  clearCompleted,
-  deleteTask,
-  toggleTask,
-} from "./tasksThunks";
 
 const TasksInsightsPanel = lazy(() => import("./components/TasksInsightsPanel"));
 
@@ -50,6 +50,10 @@ export default function TasksPage() {
     isFetching,
     isLoading,
   } = useGetTasksQuery();
+  const [runAddTask] = useAddTaskMutation();
+  const [runToggleTask] = useToggleTaskMutation();
+  const [runDeleteTask] = useDeleteTaskMutation();
+  const [runClearCompleted] = useClearCompletedMutation();
 
   useEffect(() => {
     if (fetchedTasks) {
@@ -59,28 +63,28 @@ export default function TasksPage() {
 
   const onAdd = useCallback(
     (title: string) => {
-      dispatch(addTask({ title }));
+      void runAddTask({ title });
     },
-    [dispatch],
+    [runAddTask],
   );
 
   const onToggle = useCallback(
     (id: string) => {
-      dispatch(toggleTask({ id }));
+      void runToggleTask({ id });
     },
-    [dispatch],
+    [runToggleTask],
   );
 
   const onDelete = useCallback(
     (id: string) => {
-      dispatch(deleteTask({ id }));
+      void runDeleteTask({ id });
     },
-    [dispatch],
+    [runDeleteTask],
   );
 
   const onClearCompleted = useCallback(() => {
-    dispatch(clearCompleted());
-  }, [dispatch]);
+    void runClearCompleted();
+  }, [runClearCompleted]);
 
   const onFilterChange = useCallback(
     (nextFilter: typeof filter) => {

@@ -1,6 +1,7 @@
 import { createSlice, isAnyOf } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { tasksAdapter } from "./tasksAdapter";
+import { tasksApi } from "./tasksApi";
 import {
   addTask,
   clearCompleted,
@@ -43,6 +44,16 @@ const initialState: TasksState = {
 
 function getRejectedMessage(payload: unknown, fallback?: string) {
   if (typeof payload === "string") return payload;
+
+  if (
+    payload &&
+    typeof payload === "object" &&
+    "data" in payload &&
+    typeof payload.data === "string"
+  ) {
+    return payload.data;
+  }
+
   return fallback ?? "Task request failed";
 }
 
@@ -92,7 +103,10 @@ const tasksSlice = createSlice({
       })
       .addCase(fetchTasks.rejected, (state, action) => {
         state.requests.fetch = "failed";
-        state.errors.fetch = getRejectedMessage(action.payload, action.error.message);
+        state.errors.fetch = getRejectedMessage(
+          action.payload,
+          action.error.message,
+        );
         state.hasLoaded = true;
       })
       .addCase(addTask.fulfilled, (state, action) => {
@@ -119,6 +133,44 @@ const tasksSlice = createSlice({
       )
       .addMatcher(
         isAnyOf(...writeTaskActions.map((action) => action.rejected)),
+        (state, action) => {
+          state.requests.mutate = "failed";
+          state.errors.mutate = getRejectedMessage(
+            action.payload,
+            action.error.message,
+          );
+        },
+      )
+      .addMatcher(
+        isAnyOf(
+          tasksApi.endpoints.addTask.matchPending,
+          tasksApi.endpoints.toggleTask.matchPending,
+          tasksApi.endpoints.deleteTask.matchPending,
+          tasksApi.endpoints.clearCompleted.matchPending,
+        ),
+        (state) => {
+          markMutationPending(state);
+        },
+      )
+      .addMatcher(tasksApi.endpoints.addTask.matchFulfilled, (state) => {
+        markMutationSettled(state, "addTask");
+      })
+      .addMatcher(tasksApi.endpoints.toggleTask.matchFulfilled, (state) => {
+        markMutationSettled(state, "toggleTask");
+      })
+      .addMatcher(tasksApi.endpoints.deleteTask.matchFulfilled, (state) => {
+        markMutationSettled(state, "deleteTask");
+      })
+      .addMatcher(tasksApi.endpoints.clearCompleted.matchFulfilled, (state) => {
+        markMutationSettled(state, "clearCompleted");
+      })
+      .addMatcher(
+        isAnyOf(
+          tasksApi.endpoints.addTask.matchRejected,
+          tasksApi.endpoints.toggleTask.matchRejected,
+          tasksApi.endpoints.deleteTask.matchRejected,
+          tasksApi.endpoints.clearCompleted.matchRejected,
+        ),
         (state, action) => {
           state.requests.mutate = "failed";
           state.errors.mutate = getRejectedMessage(
