@@ -9,6 +9,7 @@ import {
   toggleTask,
 } from "./tasksThunks";
 import type {
+  Task,
   TaskFilter,
   TaskMutationType,
   TasksErrorMap,
@@ -68,6 +69,13 @@ const tasksSlice = createSlice({
     setFilter(state, action: PayloadAction<{ filter: TaskFilter }>) {
       state.filter = action.payload.filter;
     },
+    hydrateTasksFromQuery(state, action: PayloadAction<{ tasks: Task[] }>) {
+      tasksAdapter.setAll(state, action.payload.tasks);
+      state.requests.fetch = "succeeded";
+      state.errors.fetch = null;
+      state.hasLoaded = true;
+      state.lastSyncedAt = Date.now();
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -122,6 +130,6 @@ const tasksSlice = createSlice({
   },
 });
 
-export const { setFilter } = tasksSlice.actions;
+export const { hydrateTasksFromQuery, setFilter } = tasksSlice.actions;
 
 export default tasksSlice.reducer;

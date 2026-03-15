@@ -6,14 +6,15 @@ import Button from "../../shared/components/Button";
 import LoadingPanel from "../../shared/components/LoadingPanel";
 import RenderProfiler from "../../shared/components/RenderProfiler";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { setFilter } from "./tasksSlice";
+import { useGetTasksQuery } from "./tasksApi";
+import { hydrateTasksFromQuery, setFilter } from "./tasksSlice";
 import {
   selectCanClearCompleted,
   selectHasLoadedTasks,
-  selectIsTasksBusy,
+  selectIsTasksMutating,
   selectLastMutation,
   selectLastSyncedAt,
-  selectTaskError,
+  selectTaskErrors,
   selectTaskFilter,
   selectTaskStats,
   selectVisibleTaskIds,
@@ -22,11 +23,14 @@ import {
   addTask,
   clearCompleted,
   deleteTask,
-  fetchTasks,
   toggleTask,
 } from "./tasksThunks";
 
 const TasksInsightsPanel = lazy(() => import("./components/TasksInsightsPanel"));
+
+function getQueryErrorMessage(error: unknown) {
+  return typeof error === "string" ? error : null;
+}
 
 export default function TasksPage() {
   const dispatch = useAppDispatch();
@@ -34,18 +38,24 @@ export default function TasksPage() {
   const visibleTaskIds = useAppSelector(selectVisibleTaskIds);
   const deferredTaskIds = useDeferredValue(visibleTaskIds);
   const stats = useAppSelector(selectTaskStats);
-  const isBusy = useAppSelector(selectIsTasksBusy);
+  const isMutating = useAppSelector(selectIsTasksMutating);
   const canClearCompleted = useAppSelector(selectCanClearCompleted);
-  const error = useAppSelector(selectTaskError);
+  const taskErrors = useAppSelector(selectTaskErrors);
   const hasLoaded = useAppSelector(selectHasLoadedTasks);
   const lastSyncedAt = useAppSelector(selectLastSyncedAt);
   const lastMutation = useAppSelector(selectLastMutation);
+  const {
+    data: fetchedTasks,
+    error: fetchError,
+    isFetching,
+    isLoading,
+  } = useGetTasksQuery();
 
   useEffect(() => {
-    if (!hasLoaded) {
-      dispatch(fetchTasks());
+    if (fetchedTasks) {
+      dispatch(hydrateTasksFromQuery({ tasks: fetchedTasks }));
     }
-  }, [dispatch, hasLoaded]);
+  }, [dispatch, fetchedTasks]);
 
   const onAdd = useCallback(
     (title: string) => {
@@ -79,8 +89,10 @@ export default function TasksPage() {
     [dispatch],
   );
 
-  const showInitialLoading = isBusy && !hasLoaded;
+  const showInitialLoading = (isLoading || isFetching) && !hasLoaded;
   const isListDeferred = deferredTaskIds !== visibleTaskIds;
+  const isBusy = isMutating || showInitialLoading;
+  const error = taskErrors.mutate ?? getQueryErrorMessage(fetchError);
 
   return (
     <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
