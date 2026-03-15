@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import tasksReducer, { setFilter } from "./tasksSlice";
-import { addTask, fetchTasks } from "./tasksThunks";
+import tasksReducer, {
+  hydrateTasksFromQuery,
+  setFilter,
+} from "./tasksSlice";
 
 const sampleTasks = [
   {
@@ -24,39 +26,17 @@ describe("tasksSlice", () => {
     expect(state.filter).toBe("completed");
   });
 
-  it("stores fetched tasks and marks the collection as loaded", () => {
+  it("hydrates query results into the normalized collection", () => {
     vi.spyOn(Date, "now").mockReturnValue(1234);
 
     const state = tasksReducer(
       undefined,
-      fetchTasks.fulfilled(sampleTasks, "request-id"),
+      hydrateTasksFromQuery({ tasks: sampleTasks }),
     );
 
     expect(state.ids).toEqual(["t1", "t2"]);
     expect(state.entities.t1?.title).toBe("Write tests");
-    expect(state.requests.fetch).toBe("succeeded");
-    expect(state.errors.fetch).toBeNull();
     expect(state.hasLoaded).toBe(true);
     expect(state.lastSyncedAt).toBe(1234);
-  });
-
-  it("captures failed mutations with a user-facing error", () => {
-    const pendingState = tasksReducer(
-      undefined,
-      addTask.pending("request-id", { title: "Broken task" }),
-    );
-
-    const state = tasksReducer(
-      pendingState,
-      addTask.rejected(
-        new Error("Task title cannot be empty"),
-        "request-id",
-        { title: "Broken task" },
-        "Task title cannot be empty",
-      ),
-    );
-
-    expect(state.requests.mutate).toBe("failed");
-    expect(state.errors.mutate).toBe("Task title cannot be empty");
   });
 });

@@ -1,14 +1,7 @@
 import { createSlice, isAnyOf } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
-import { tasksAdapter } from "./tasksAdapter";
 import { tasksApi } from "./tasksApi";
-import {
-  addTask,
-  clearCompleted,
-  deleteTask,
-  fetchTasks,
-  toggleTask,
-} from "./tasksThunks";
+import { tasksAdapter } from "./tasksAdapter";
 import type {
   Task,
   TaskFilter,
@@ -30,11 +23,9 @@ const initialState: TasksState = {
   ...tasksAdapter.getInitialState(),
   filter: "all",
   requests: {
-    fetch: "idle",
     mutate: "idle",
   },
   errors: {
-    fetch: null,
     mutate: null,
   },
   hasLoaded: false,
@@ -56,8 +47,6 @@ function getRejectedMessage(payload: unknown, fallback?: string) {
 
   return fallback ?? "Task request failed";
 }
-
-const writeTaskActions = [addTask, toggleTask, deleteTask, clearCompleted];
 
 function markMutationPending(state: TasksState) {
   state.requests.mutate = "loading";
@@ -82,65 +71,12 @@ const tasksSlice = createSlice({
     },
     hydrateTasksFromQuery(state, action: PayloadAction<{ tasks: Task[] }>) {
       tasksAdapter.setAll(state, action.payload.tasks);
-      state.requests.fetch = "succeeded";
-      state.errors.fetch = null;
       state.hasLoaded = true;
       state.lastSyncedAt = Date.now();
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchTasks.pending, (state) => {
-        state.requests.fetch = "loading";
-        state.errors.fetch = null;
-      })
-      .addCase(fetchTasks.fulfilled, (state, action) => {
-        tasksAdapter.setAll(state, action.payload);
-        state.requests.fetch = "succeeded";
-        state.errors.fetch = null;
-        state.hasLoaded = true;
-        state.lastSyncedAt = Date.now();
-      })
-      .addCase(fetchTasks.rejected, (state, action) => {
-        state.requests.fetch = "failed";
-        state.errors.fetch = getRejectedMessage(
-          action.payload,
-          action.error.message,
-        );
-        state.hasLoaded = true;
-      })
-      .addCase(addTask.fulfilled, (state, action) => {
-        tasksAdapter.addOne(state, action.payload);
-        markMutationSettled(state, "addTask");
-      })
-      .addCase(toggleTask.fulfilled, (state, action) => {
-        tasksAdapter.upsertOne(state, action.payload);
-        markMutationSettled(state, "toggleTask");
-      })
-      .addCase(deleteTask.fulfilled, (state, action) => {
-        tasksAdapter.removeOne(state, action.payload);
-        markMutationSettled(state, "deleteTask");
-      })
-      .addCase(clearCompleted.fulfilled, (state, action) => {
-        tasksAdapter.removeMany(state, action.payload);
-        markMutationSettled(state, "clearCompleted");
-      })
-      .addMatcher(
-        isAnyOf(...writeTaskActions.map((action) => action.pending)),
-        (state) => {
-          markMutationPending(state);
-        },
-      )
-      .addMatcher(
-        isAnyOf(...writeTaskActions.map((action) => action.rejected)),
-        (state, action) => {
-          state.requests.mutate = "failed";
-          state.errors.mutate = getRejectedMessage(
-            action.payload,
-            action.error.message,
-          );
-        },
-      )
       .addMatcher(
         isAnyOf(
           tasksApi.endpoints.addTask.matchPending,

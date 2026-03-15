@@ -17,11 +17,9 @@ export type TaskMutationType =
   | null;
 
 export type TasksRequestMap = {
-  fetch: TaskRequestStatus;
   mutate: TaskRequestStatus;
 };
 
 export type TasksErrorMap = {
-  fetch: string | null;
   mutate: string | null;
 };

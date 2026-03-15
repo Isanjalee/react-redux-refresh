@@ -24,14 +24,11 @@ export const selectTaskRequests = (state: RootState) =>
 
 export const selectTaskErrors = (state: RootState) => selectTasksState(state).errors;
 
-export const selectTaskFetchStatus = (state: RootState) =>
-  selectTasksState(state).requests.fetch;
-
 export const selectTaskMutationStatus = (state: RootState) =>
   selectTasksState(state).requests.mutate;
 
 export const selectTaskError = createSelector([selectTaskErrors], (errors) => {
-  return errors.mutate ?? errors.fetch;
+  return errors.mutate;
 });
 
 export const selectHasLoadedTasks = (state: RootState): boolean =>
@@ -43,19 +40,14 @@ export const selectLastSyncedAt = (state: RootState): number | null =>
 export const selectLastMutation = (state: RootState) =>
   selectTasksState(state).lastMutation;
 
-export const selectIsTasksLoading = createSelector(
-  [selectTaskFetchStatus],
-  (status) => status === "loading",
-);
-
 export const selectIsTasksMutating = createSelector(
   [selectTaskMutationStatus],
   (status) => status === "loading",
 );
 
 export const selectIsTasksBusy = createSelector(
-  [selectIsTasksLoading, selectIsTasksMutating],
-  (isLoading, isMutating) => isLoading || isMutating,
+  [selectIsTasksMutating],
+  (isMutating) => isMutating,
 );
 
 export const selectCompletedTaskIds = createSelector([selectTasks], (tasks) =>
