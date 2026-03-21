@@ -3,6 +3,7 @@ import {
   resolveApiBaseUrl,
   tasksApiConfig,
 } from "../../shared/api/apiConfig";
+import { makeId } from "./taskUtils";
 import {
   fromClearCompletedResponseDto,
   fromDeleteTaskResponseDto,
@@ -15,6 +16,15 @@ import {
 } from "./taskDtos";
 import { taskApiFetch } from "./tasksHttp";
 import type { Task } from "./types";
+
+function createOptimisticTask(title: string): Task {
+  return {
+    id: `optimistic-${makeId()}`,
+    title: title.trim(),
+    completed: false,
+    createdAt: Date.now(),
+  };
+}
 
 export const tasksApi = createApi({
   reducerPath: "tasksApi",
@@ -45,6 +55,37 @@ export const tasksApi = createApi({
         body: toCreateTaskRequestDto(title),
       }),
       transformResponse: (response: TaskDto) => toTask(response),
+      async onQueryStarted({ title }, { dispatch, queryFulfilled }) {
+        const optimisticTask = createOptimisticTask(title);
+        const patchResult = dispatch(
+          tasksApi.util.updateQueryData("getTasks", undefined, (draft) => {
+            draft.unshift(optimisticTask);
+          }),
+        );
+
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(
+            tasksApi.util.updateQueryData("getTasks", undefined, (draft) => {
+              const optimisticIndex = draft.findIndex(
+                (task) => task.id === optimisticTask.id,
+              );
+
+              if (optimisticIndex >= 0) {
+                draft[optimisticIndex] = data;
+                return;
+              }
+
+              const existingIndex = draft.findIndex((task) => task.id === data.id);
+              if (existingIndex === -1) {
+                draft.unshift(data);
+              }
+            }),
+          );
+        } catch {
+          patchResult.undo();
+        }
+      },
       invalidatesTags: [{ type: tasksApiConfig.tagType, id: "LIST" }],
     }),
     toggleTask: builder.mutation<Task, { id: string }>({

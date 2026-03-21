@@ -26,8 +26,19 @@ const mockedToggleStoredTask = vi.mocked(toggleStoredTask);
 const mockedDeleteStoredTask = vi.mocked(deleteStoredTask);
 const mockedClearStoredCompletedTasks = vi.mocked(clearStoredCompletedTasks);
 
+function createDeferredPromise<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+
+  return { promise, resolve, reject };
+}
+
 describe("TasksPage integration", () => {
-  it("loads tasks and lets the user add and toggle them", async () => {
+  it("loads tasks and applies optimistic create before the request resolves", async () => {
     let tasks: Task[] = [
       {
         id: "t1",
@@ -43,6 +54,8 @@ describe("TasksPage integration", () => {
       },
     ];
 
+    const createTaskRequest = createDeferredPromise<Task>();
+
     mockedFetchStoredTasks.mockImplementation(async () => tasks);
 
     mockedCreateStoredTask.mockImplementation(async (title: string) => {
@@ -52,8 +65,12 @@ describe("TasksPage integration", () => {
         completed: false,
         createdAt: 300,
       };
-      tasks = [nextTask, ...tasks];
-      return nextTask;
+
+      createTaskRequest.promise.then(() => {
+        tasks = [nextTask, ...tasks];
+      });
+
+      return createTaskRequest.promise;
     });
 
     mockedToggleStoredTask.mockImplementation(async (id: string) => {
@@ -92,11 +109,22 @@ describe("TasksPage integration", () => {
     expect(await screen.findByText("Write reducer tests")).toBeInTheDocument();
     expect(screen.getByText("Mock the API layer")).toBeInTheDocument();
 
-    await user.type(screen.getByPlaceholderText("Add a task..."), "Ship Day 6");
+    await user.type(screen.getByPlaceholderText("Add a task..."), "Ship Day 9");
     await user.click(screen.getByRole("button", { name: "Add" }));
 
-    expect(mockedCreateStoredTask).toHaveBeenCalledWith("Ship Day 6");
-    expect(await screen.findByText("Ship Day 6")).toBeInTheDocument();
+    expect(mockedCreateStoredTask).toHaveBeenCalledWith("Ship Day 9");
+    expect(await screen.findByText("Ship Day 9")).toBeInTheDocument();
+
+    createTaskRequest.resolve({
+      id: "t3",
+      title: "Ship Day 9",
+      completed: false,
+      createdAt: 300,
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("Ship Day 9")).toBeInTheDocument();
+    });
 
     await user.click(
       screen.getByRole("checkbox", { name: "Write reducer tests" }),
