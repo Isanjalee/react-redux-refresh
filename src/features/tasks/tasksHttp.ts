@@ -1,5 +1,11 @@
 import { apiConfig, tasksApiConfig } from "../../shared/api/apiConfig";
 import {
+  toClearCompletedResponseDto,
+  toDeleteTaskResponseDto,
+  toTaskDto,
+  type CreateTaskRequestDto,
+} from "./taskDtos";
+import {
   clearStoredCompletedTasks,
   createStoredTask,
   deleteStoredTask,
@@ -68,25 +74,27 @@ export async function taskApiFetch(input: RequestInfo | URL, init?: RequestInit)
   try {
     if (pathname === tasksCollectionPath && method === "GET") {
       const tasks = await fetchStoredTasks();
-      return jsonResponse(tasks);
+      return jsonResponse(tasks.map(toTaskDto));
     }
 
     if (pathname === tasksCollectionPath && method === "POST") {
       const rawBody = await getRequestBody(input, init);
-      const payload = rawBody ? JSON.parse(rawBody) : {};
-      const task = await createStoredTask(String(payload.title ?? ""));
-      return jsonResponse(task, 201);
+      const payload = rawBody
+        ? (JSON.parse(rawBody) as CreateTaskRequestDto)
+        : { title: "" };
+      const task = await createStoredTask(payload.title);
+      return jsonResponse(toTaskDto(task), 201);
     }
 
     if (pathname === clearCompletedPath && method === "POST") {
       const removedIds = await clearStoredCompletedTasks();
-      return jsonResponse(removedIds);
+      return jsonResponse(toClearCompletedResponseDto(removedIds));
     }
 
     if (pathname.endsWith("/toggle") && method === "PATCH") {
       const id = pathname.split("/").slice(-2, -1)[0];
       const task = await toggleStoredTask(id);
-      return jsonResponse(task);
+      return jsonResponse(toTaskDto(task));
     }
 
     if (pathname.startsWith(`${tasksCollectionPath}/`) && method === "DELETE") {
@@ -96,7 +104,7 @@ export async function taskApiFetch(input: RequestInfo | URL, init?: RequestInit)
       }
 
       const deletedId = await deleteStoredTask(id);
-      return jsonResponse(deletedId);
+      return jsonResponse(toDeleteTaskResponseDto(deletedId));
     }
 
     return jsonResponse("Route not found", 404);
