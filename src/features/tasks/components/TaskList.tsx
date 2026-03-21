@@ -5,6 +5,8 @@ type Props = {
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   disabled?: boolean;
+  emptyTitle?: string;
+  emptyDescription?: string;
 };
 
 export default function TaskList({
@@ -12,11 +14,19 @@ export default function TaskList({
   onToggle,
   onDelete,
   disabled = false,
+  emptyTitle = "No tasks yet",
+  emptyDescription = "Add your first task to start building this workspace.",
 }: Props) {
   if (taskIds.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm text-gray-500">
-        No tasks here. Add your first one.
+      <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-10 text-center">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
+          Empty state
+        </p>
+        <h3 className="mt-3 text-lg font-semibold text-slate-900">{emptyTitle}</h3>
+        <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-600">
+          {emptyDescription}
+        </p>
       </div>
     );
   }
