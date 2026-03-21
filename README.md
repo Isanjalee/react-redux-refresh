@@ -64,9 +64,11 @@ src/
 |       |   |-- TaskList.tsx
 |       |   `-- TasksInsightsPanel.tsx
 |       |-- storage.ts
+|       |-- taskDtos.ts
 |       |-- tasksAdapter.ts
 |       |-- tasksApi.test.ts
 |       |-- tasksApi.ts
+|       |-- tasksHttp.ts
 |       |-- TasksPage.integration.test.tsx
 |       |-- TasksPage.tsx
 |       |-- routes.tsx
@@ -76,6 +78,9 @@ src/
 |       |-- taskUtils.ts
 |       `-- types.ts
 |-- shared/
+|   |-- api/
+|   |   |-- apiConfig.ts
+|   |   `-- apiErrors.ts
 |   |-- components/
 |   |   |-- AppShell.tsx
 |   |   |-- Button.tsx
@@ -88,6 +93,7 @@ src/
 |   |-- setup.ts
 |   `-- test-utils.tsx
 |-- index.css
+|-- vite-env.d.ts
 `-- main.tsx
 ```
 
@@ -190,7 +196,7 @@ src/
 - Day 6 complete
 - Day 7 complete
 - Day 8 complete
-- Day 9 in progress
+- Day 9 complete
 
 ## Day 9 Goal
 
@@ -221,10 +227,10 @@ This day is focused on making the app feel closer to a real API-driven frontend 
 
 ## Next Improvements
 
-- Real HTTP API integration instead of local storage base queries
-- Optimistic updates for mutations
-- Route prefetching and smarter loading heuristics
-- Profiler-driven tuning against larger data sets
+- Replace the fetch adapter with a real backend service
+- Add optimistic handling for clear-completed mutations
+- Add pagination or filtering against server-backed endpoints
+- Add retry/backoff strategy for unstable network conditions
 - E2E coverage for full browser flows
 
 ## Installation
