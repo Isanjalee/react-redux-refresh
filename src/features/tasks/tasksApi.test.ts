@@ -8,6 +8,7 @@ import {
   fetchStoredTasks,
   toggleStoredTask,
 } from "./storage";
+import type { Task } from "./types";
 
 vi.mock("./storage", () => ({
   fetchStoredTasks: vi.fn(),
@@ -22,6 +23,17 @@ const mockedCreateStoredTask = vi.mocked(createStoredTask);
 const mockedToggleStoredTask = vi.mocked(toggleStoredTask);
 const mockedDeleteStoredTask = vi.mocked(deleteStoredTask);
 const mockedClearStoredCompletedTasks = vi.mocked(clearStoredCompletedTasks);
+
+function createDeferredPromise<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+
+  return { promise, resolve, reject };
+}
 
 describe("tasksApi", () => {
   it("fetches tasks through the query endpoint", async () => {
@@ -88,6 +100,136 @@ describe("tasksApi", () => {
     });
   });
 
+  it("rolls back optimistic create when the mutation fails", async () => {
+    const tasks: Task[] = [
+      {
+        id: "t1",
+        title: "Existing task",
+        completed: false,
+        createdAt: 100,
+      },
+    ];
+    const deferredCreate = createDeferredPromise<Task>();
+
+    mockedFetchStoredTasks.mockResolvedValue(tasks);
+    mockedCreateStoredTask.mockImplementation(() => deferredCreate.promise);
+
+    const store = createAppStore();
+    const query = store.dispatch(tasksApi.endpoints.getTasks.initiate());
+    await query.unwrap();
+
+    const mutation = store.dispatch(
+      tasksApi.endpoints.addTask.initiate({ title: "Optimistic task" }),
+    );
+
+    await Promise.resolve();
+
+    expect(
+      tasksApi.endpoints.getTasks.select()(store.getState()).data?.[0]?.title,
+    ).toBe("Optimistic task");
+
+    deferredCreate.reject(new Error("Create failed"));
+    await mutation;
+
+    await waitForTick();
+
+    expect(
+      tasksApi.endpoints.getTasks.select()(store.getState()).data,
+    ).toEqual(tasks);
+
+    query.unsubscribe();
+  });
+
+  it("rolls back optimistic toggle when the mutation fails", async () => {
+    const tasks: Task[] = [
+      {
+        id: "t1",
+        title: "Existing task",
+        completed: false,
+        createdAt: 100,
+      },
+    ];
+    const deferredToggle = createDeferredPromise<Task>();
+
+    mockedFetchStoredTasks.mockResolvedValue(tasks);
+    mockedToggleStoredTask.mockImplementation(() => deferredToggle.promise);
+
+    const store = createAppStore();
+    const query = store.dispatch(tasksApi.endpoints.getTasks.initiate());
+    await query.unwrap();
+
+    const mutation = store.dispatch(
+      tasksApi.endpoints.toggleTask.initiate({ id: "t1" }),
+    );
+
+    await Promise.resolve();
+
+    expect(
+      tasksApi.endpoints.getTasks.select()(store.getState()).data?.[0]?.completed,
+    ).toBe(true);
+
+    deferredToggle.reject(new Error("Toggle failed"));
+    await mutation;
+
+    await waitForTick();
+
+    expect(
+      tasksApi.endpoints.getTasks.select()(store.getState()).data?.[0]?.completed,
+    ).toBe(false);
+
+    query.unsubscribe();
+  });
+
+  it("rolls back optimistic delete when the mutation fails", async () => {
+    const tasks: Task[] = [
+      {
+        id: "t1",
+        title: "Existing task",
+        completed: false,
+        createdAt: 100,
+      },
+      {
+        id: "t2",
+        title: "Keep me",
+        completed: false,
+        createdAt: 90,
+      },
+    ];
+    const deferredDelete = createDeferredPromise<string>();
+
+    mockedFetchStoredTasks.mockResolvedValue(tasks);
+    mockedDeleteStoredTask.mockImplementation(() => deferredDelete.promise);
+
+    const store = createAppStore();
+    const query = store.dispatch(tasksApi.endpoints.getTasks.initiate());
+    await query.unwrap();
+
+    const mutation = store.dispatch(
+      tasksApi.endpoints.deleteTask.initiate({ id: "t1" }),
+    );
+
+    await Promise.resolve();
+
+    expect(
+      tasksApi.endpoints.getTasks.select()(store.getState()).data?.map(
+        (task) => task.id,
+      ),
+    ).toEqual(["t2"]);
+
+    deferredDelete.reject(new Error("Delete failed"));
+    await mutation;
+
+    await waitForTick();
+
+    expect(
+      tasksApi.endpoints.getTasks.select()(store.getState()).data?.map(
+        (task) => task.id,
+      ),
+    ).toEqual(["t1", "t2"]);
+
+    query.unsubscribe();
+  });
+
   it("invalidates and refetches the task list after a mutation", async () => {
     let tasks = [
       {
@@ -136,9 +278,7 @@ describe("tasksApi", () => {
       tasksApi.endpoints.addTask.initiate({ title: "Fresh task" }),
     ).unwrap();
 
-    await new Promise((resolve) => {
-      setTimeout(resolve, 0);
-    });
+    await waitForTick();
 
     expect(mockedFetchStoredTasks).toHaveBeenCalledTimes(2);
     expect(
@@ -148,3 +288,9 @@ describe("tasksApi", () => {
     query.unsubscribe();
   });
 });
+
+function waitForTick() {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
