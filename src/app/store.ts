@@ -17,7 +17,7 @@ export function createAppStore(preloadedState?: Partial<RootState>) {
       getDefaultMiddleware().concat(tasksApi.middleware),
     devTools: import.meta.env.DEV
       ? {
-          name: "React Redux Refresh - Day 8",
+          name: "React Redux Refresh - Day 9",
           trace: true,
           traceLimit: 25,
         }
