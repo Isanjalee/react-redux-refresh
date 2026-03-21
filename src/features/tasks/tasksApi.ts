@@ -1,4 +1,5 @@
 import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
+import { tasksApiConfig } from "../../shared/api/apiConfig";
 import {
   clearStoredCompletedTasks,
   createStoredTask,
@@ -15,7 +16,7 @@ function getErrorMessage(error: unknown) {
 export const tasksApi = createApi({
   reducerPath: "tasksApi",
   baseQuery: fakeBaseQuery<string>(),
-  tagTypes: ["Task"],
+  tagTypes: [tasksApiConfig.tagType],
   endpoints: (builder) => ({
     getTasks: builder.query<Task[], void>({
       async queryFn() {
@@ -29,10 +30,13 @@ export const tasksApi = createApi({
       providesTags: (result) =>
         result
           ? [
-              ...result.map((task) => ({ type: "Task" as const, id: task.id })),
-              { type: "Task" as const, id: "LIST" },
+              ...result.map((task) => ({
+                type: tasksApiConfig.tagType,
+                id: task.id,
+              })),
+              { type: tasksApiConfig.tagType, id: "LIST" },
             ]
-          : [{ type: "Task" as const, id: "LIST" }],
+          : [{ type: tasksApiConfig.tagType, id: "LIST" }],
     }),
     addTask: builder.mutation<Task, { title: string }>({
       async queryFn({ title }) {
@@ -43,7 +47,7 @@ export const tasksApi = createApi({
           return { error: getErrorMessage(error) };
         }
       },
-      invalidatesTags: [{ type: "Task", id: "LIST" }],
+      invalidatesTags: [{ type: tasksApiConfig.tagType, id: "LIST" }],
     }),
     toggleTask: builder.mutation<Task, { id: string }>({
       async queryFn({ id }) {
@@ -55,8 +59,8 @@ export const tasksApi = createApi({
         }
       },
       invalidatesTags: (_result, _error, arg) => [
-        { type: "Task", id: arg.id },
-        { type: "Task", id: "LIST" },
+        { type: tasksApiConfig.tagType, id: arg.id },
+        { type: tasksApiConfig.tagType, id: "LIST" },
       ],
     }),
     deleteTask: builder.mutation<string, { id: string }>({
@@ -69,8 +73,8 @@ export const tasksApi = createApi({
         }
       },
       invalidatesTags: (_result, _error, arg) => [
-        { type: "Task", id: arg.id },
-        { type: "Task", id: "LIST" },
+        { type: tasksApiConfig.tagType, id: arg.id },
+        { type: tasksApiConfig.tagType, id: "LIST" },
       ],
     }),
     clearCompleted: builder.mutation<string[], void>({
@@ -82,7 +86,7 @@ export const tasksApi = createApi({
           return { error: getErrorMessage(error) };
         }
       },
-      invalidatesTags: [{ type: "Task", id: "LIST" }],
+      invalidatesTags: [{ type: tasksApiConfig.tagType, id: "LIST" }],
     }),
   }),
 });
