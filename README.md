@@ -39,6 +39,11 @@ This repository is used to practice:
 - RTK Query queries and mutations
 - Caching and invalidation strategies
 - Auto-generated hook workflows
+- HTTP-style API integration
+- Optimistic UI updates
+- Rollback-aware mutation flows
+- Environment-based API configuration
+- API-focused error handling
 
 ## Project Structure
 
@@ -164,6 +169,17 @@ src/
 - Leaner async state architecture
 - RTK Query endpoint testing
 
+### Day 9
+
+- `fetchBaseQuery`
+- Environment-based API configuration
+- API DTOs and mapping layers
+- Error normalization
+- Optimistic create, toggle, and delete flows
+- Rollback on failed mutations
+- Cache patching vs invalidation
+- Production-style loading and error UX
+
 ## Current Status
 
 - Day 1 complete
@@ -174,6 +190,34 @@ src/
 - Day 6 complete
 - Day 7 complete
 - Day 8 complete
+- Day 9 in progress
+
+## Day 9 Goal
+
+Upgrade the task app from local/demo-style RTK Query usage toward a more production-like frontend data flow by learning:
+
+- Real API service boundaries
+- Request and response typing
+- Optimistic updates
+- Rollback on failure
+- Cache patching vs invalidation
+- Environment-aware API setup
+- Cleaner loading and error UX
+
+This day is focused on making the app feel closer to a real API-driven frontend instead of a local persistence demo.
+
+## Day 9 Commit Plan
+
+1. Add the Day 9 roadmap and goals to the docs
+2. Add shared environment-based API config
+3. Move `tasksApi` to `fetchBaseQuery`
+4. Add task DTO and mapper helpers
+5. Normalize API errors for UI use
+6. Add optimistic create task behavior
+7. Add optimistic toggle and delete behavior
+8. Add rollback for failed optimistic mutations
+9. Improve loading, empty, and error UX
+10. Update the interview guide and PDF
 
 ## Next Improvements
 
