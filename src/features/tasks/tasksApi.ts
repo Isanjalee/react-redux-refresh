@@ -1,32 +1,21 @@
-import { createApi, fakeBaseQuery } from "@reduxjs/toolkit/query/react";
-import { tasksApiConfig } from "../../shared/api/apiConfig";
+import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import {
-  clearStoredCompletedTasks,
-  createStoredTask,
-  deleteStoredTask,
-  fetchStoredTasks,
-  toggleStoredTask,
-} from "./storage";
+  resolveApiBaseUrl,
+  tasksApiConfig,
+} from "../../shared/api/apiConfig";
+import { taskApiFetch } from "./tasksHttp";
 import type { Task } from "./types";
-
-function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : "Task request failed";
-}
 
 export const tasksApi = createApi({
   reducerPath: "tasksApi",
-  baseQuery: fakeBaseQuery<string>(),
+  baseQuery: fetchBaseQuery({
+    baseUrl: resolveApiBaseUrl(),
+    fetchFn: taskApiFetch,
+  }),
   tagTypes: [tasksApiConfig.tagType],
   endpoints: (builder) => ({
     getTasks: builder.query<Task[], void>({
-      async queryFn() {
-        try {
-          const data = await fetchStoredTasks();
-          return { data };
-        } catch (error) {
-          return { error: getErrorMessage(error) };
-        }
-      },
+      query: () => tasksApiConfig.resourcePath,
       providesTags: (result) =>
         result
           ? [
@@ -39,53 +28,38 @@ export const tasksApi = createApi({
           : [{ type: tasksApiConfig.tagType, id: "LIST" }],
     }),
     addTask: builder.mutation<Task, { title: string }>({
-      async queryFn({ title }) {
-        try {
-          const data = await createStoredTask(title);
-          return { data };
-        } catch (error) {
-          return { error: getErrorMessage(error) };
-        }
-      },
+      query: ({ title }) => ({
+        url: tasksApiConfig.resourcePath,
+        method: "POST",
+        body: { title },
+      }),
       invalidatesTags: [{ type: tasksApiConfig.tagType, id: "LIST" }],
     }),
     toggleTask: builder.mutation<Task, { id: string }>({
-      async queryFn({ id }) {
-        try {
-          const data = await toggleStoredTask(id);
-          return { data };
-        } catch (error) {
-          return { error: getErrorMessage(error) };
-        }
-      },
+      query: ({ id }) => ({
+        url: `${tasksApiConfig.resourcePath}/${id}/toggle`,
+        method: "PATCH",
+      }),
       invalidatesTags: (_result, _error, arg) => [
         { type: tasksApiConfig.tagType, id: arg.id },
         { type: tasksApiConfig.tagType, id: "LIST" },
       ],
     }),
     deleteTask: builder.mutation<string, { id: string }>({
-      async queryFn({ id }) {
-        try {
-          const data = await deleteStoredTask(id);
-          return { data };
-        } catch (error) {
-          return { error: getErrorMessage(error) };
-        }
-      },
+      query: ({ id }) => ({
+        url: `${tasksApiConfig.resourcePath}/${id}`,
+        method: "DELETE",
+      }),
       invalidatesTags: (_result, _error, arg) => [
         { type: tasksApiConfig.tagType, id: arg.id },
         { type: tasksApiConfig.tagType, id: "LIST" },
       ],
     }),
     clearCompleted: builder.mutation<string[], void>({
-      async queryFn() {
-        try {
-          const data = await clearStoredCompletedTasks();
-          return { data };
-        } catch (error) {
-          return { error: getErrorMessage(error) };
-        }
-      },
+      query: () => ({
+        url: `${tasksApiConfig.resourcePath}/clear-completed`,
+        method: "POST",
+      }),
       invalidatesTags: [{ type: tasksApiConfig.tagType, id: "LIST" }],
     }),
   }),

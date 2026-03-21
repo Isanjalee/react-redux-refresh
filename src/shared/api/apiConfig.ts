@@ -17,6 +17,14 @@ function normalizeResourcePath(value: string) {
   return value.startsWith("/") ? value : "/" + value;
 }
 
+function getRuntimeOrigin() {
+  if (typeof globalThis.location?.origin === "string") {
+    return globalThis.location.origin;
+  }
+
+  return "http://localhost";
+}
+
 export const apiConfig = {
   baseUrl: normalizeBaseUrl(
     import.meta.env.VITE_API_BASE_URL ?? DEFAULT_API_BASE_URL,
@@ -25,6 +33,14 @@ export const apiConfig = {
     import.meta.env.VITE_TASKS_API_PATH ?? DEFAULT_TASKS_API_PATH,
   ),
 };
+
+export function resolveApiBaseUrl(baseUrl = apiConfig.baseUrl) {
+  if (/^https?:\/\//.test(baseUrl)) {
+    return baseUrl;
+  }
+
+  return new URL(baseUrl, getRuntimeOrigin()).toString().replace(/\/$/, "");
+}
 
 export function buildApiUrl(resourcePath: string) {
   return apiConfig.baseUrl + normalizeResourcePath(resourcePath);
