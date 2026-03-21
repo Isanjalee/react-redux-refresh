@@ -64,6 +64,30 @@ describe("tasksApi", () => {
     expect(result.title).toBe("Ship RTK Query");
   });
 
+  it("normalizes api errors for rejected mutations", async () => {
+    mockedCreateStoredTask.mockRejectedValue(
+      new Error("Task title cannot be empty"),
+    );
+
+    const store = createAppStore();
+    const result = await store.dispatch(
+      tasksApi.endpoints.addTask.initiate({ title: "" }),
+    );
+
+    expect("error" in result).toBe(true);
+    if (!("error" in result)) {
+      throw new Error("Expected a rejected RTK Query action");
+    }
+
+    expect(result.error).toEqual({
+      status: 400,
+      data: {
+        message: "Task title cannot be empty",
+        code: "TASKS_API_ERROR",
+      },
+    });
+  });
+
   it("invalidates and refetches the task list after a mutation", async () => {
     let tasks = [
       {

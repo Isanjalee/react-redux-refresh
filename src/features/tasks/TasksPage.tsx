@@ -5,6 +5,7 @@ import TaskList from "./components/TaskList";
 import Button from "../../shared/components/Button";
 import LoadingPanel from "../../shared/components/LoadingPanel";
 import RenderProfiler from "../../shared/components/RenderProfiler";
+import { normalizeApiError } from "../../shared/api/apiErrors";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import {
   useAddTaskMutation,
@@ -27,10 +28,6 @@ import {
 } from "./tasksSelectors";
 
 const TasksInsightsPanel = lazy(() => import("./components/TasksInsightsPanel"));
-
-function getQueryErrorMessage(error: unknown) {
-  return typeof error === "string" ? error : null;
-}
 
 export default function TasksPage() {
   const dispatch = useAppDispatch();
@@ -96,7 +93,7 @@ export default function TasksPage() {
   const showInitialLoading = (isLoading || isFetching) && !hasLoaded;
   const isListDeferred = deferredTaskIds !== visibleTaskIds;
   const isBusy = isMutating || showInitialLoading;
-  const error = taskErrors.mutate ?? getQueryErrorMessage(fetchError);
+  const error = taskErrors.mutate ?? normalizeApiError(fetchError, "Task request failed");
 
   return (
     <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8">

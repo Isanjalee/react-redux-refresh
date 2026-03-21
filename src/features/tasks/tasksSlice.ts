@@ -1,5 +1,6 @@
 import { createSlice, isAnyOf } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
+import { normalizeApiError } from "../../shared/api/apiErrors";
 import { tasksApi } from "./tasksApi";
 import { tasksAdapter } from "./tasksAdapter";
 import type {
@@ -32,21 +33,6 @@ const initialState: TasksState = {
   lastSyncedAt: null,
   lastMutation: null,
 };
-
-function getRejectedMessage(payload: unknown, fallback?: string) {
-  if (typeof payload === "string") return payload;
-
-  if (
-    payload &&
-    typeof payload === "object" &&
-    "data" in payload &&
-    typeof payload.data === "string"
-  ) {
-    return payload.data;
-  }
-
-  return fallback ?? "Task request failed";
-}
 
 function markMutationPending(state: TasksState) {
   state.requests.mutate = "loading";
@@ -109,9 +95,9 @@ const tasksSlice = createSlice({
         ),
         (state, action) => {
           state.requests.mutate = "failed";
-          state.errors.mutate = getRejectedMessage(
-            action.payload,
-            action.error.message,
+          state.errors.mutate = normalizeApiError(
+            action.payload ?? action.error,
+            "Task request failed",
           );
         },
       );

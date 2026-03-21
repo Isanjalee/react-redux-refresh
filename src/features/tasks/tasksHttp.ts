@@ -1,4 +1,5 @@
 import { apiConfig, tasksApiConfig } from "../../shared/api/apiConfig";
+import { toApiErrorPayload } from "../../shared/api/apiErrors";
 import {
   toClearCompletedResponseDto,
   toDeleteTaskResponseDto,
@@ -100,16 +101,16 @@ export async function taskApiFetch(input: RequestInfo | URL, init?: RequestInit)
     if (pathname.startsWith(`${tasksCollectionPath}/`) && method === "DELETE") {
       const id = getTaskIdFromDeletePath(pathname);
       if (!id) {
-        return jsonResponse("Task not found", 404);
+        return jsonResponse(toApiErrorPayload("Task not found", "TASK_NOT_FOUND"), 404);
       }
 
       const deletedId = await deleteStoredTask(id);
       return jsonResponse(toDeleteTaskResponseDto(deletedId));
     }
 
-    return jsonResponse("Route not found", 404);
+    return jsonResponse(toApiErrorPayload("Route not found", "ROUTE_NOT_FOUND"), 404);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Task request failed";
-    return jsonResponse(message, 400);
+    return jsonResponse(toApiErrorPayload(message), 400);
   }
 }
