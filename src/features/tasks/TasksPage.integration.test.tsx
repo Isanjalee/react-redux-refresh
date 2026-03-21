@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../test/test-utils";
@@ -38,7 +38,7 @@ function createDeferredPromise<T>() {
 }
 
 describe("TasksPage integration", () => {
-  it("loads tasks and applies optimistic create before the request resolves", async () => {
+  it("loads tasks and applies optimistic create, toggle, and delete before requests resolve", async () => {
     let tasks: Task[] = [
       {
         id: "t1",
@@ -55,6 +55,8 @@ describe("TasksPage integration", () => {
     ];
 
     const createTaskRequest = createDeferredPromise<Task>();
+    const toggleTaskRequest = createDeferredPromise<Task>();
+    const deleteTaskRequest = createDeferredPromise<string>();
 
     mockedFetchStoredTasks.mockImplementation(async () => tasks);
 
@@ -74,23 +76,25 @@ describe("TasksPage integration", () => {
     });
 
     mockedToggleStoredTask.mockImplementation(async (id: string) => {
-      let updatedTask: Task | undefined;
-      tasks = tasks.map((task) => {
-        if (task.id !== id) return task;
-        updatedTask = { ...task, completed: !task.completed };
-        return updatedTask;
-      });
-
-      if (!updatedTask) {
+      const existing = tasks.find((task) => task.id === id);
+      if (!existing) {
         throw new Error("Task not found");
       }
 
-      return updatedTask;
+      const updatedTask = { ...existing, completed: !existing.completed };
+      toggleTaskRequest.promise.then(() => {
+        tasks = tasks.map((task) => (task.id === id ? updatedTask : task));
+      });
+
+      return toggleTaskRequest.promise;
     });
 
     mockedDeleteStoredTask.mockImplementation(async (id: string) => {
-      tasks = tasks.filter((task) => task.id !== id);
-      return id;
+      deleteTaskRequest.promise.then(() => {
+        tasks = tasks.filter((task) => task.id !== id);
+      });
+
+      return deleteTaskRequest.promise;
     });
 
     mockedClearStoredCompletedTasks.mockImplementation(async () => {
@@ -126,11 +130,26 @@ describe("TasksPage integration", () => {
       expect(screen.getByText("Ship Day 9")).toBeInTheDocument();
     });
 
-    await user.click(
-      screen.getByRole("checkbox", { name: "Write reducer tests" }),
-    );
+    const toggleCheckbox = screen.getByRole("checkbox", {
+      name: "Write reducer tests",
+    });
+    expect(toggleCheckbox).not.toBeChecked();
+
+    await user.click(toggleCheckbox);
 
     expect(mockedToggleStoredTask).toHaveBeenCalledWith("t1");
+    await waitFor(() => {
+      expect(
+        screen.getByRole("checkbox", { name: "Write reducer tests" }),
+      ).toBeChecked();
+    });
+
+    toggleTaskRequest.resolve({
+      id: "t1",
+      title: "Write reducer tests",
+      completed: true,
+      createdAt: 200,
+    });
 
     await waitFor(() => {
       expect(
@@ -138,8 +157,31 @@ describe("TasksPage integration", () => {
       ).toBeChecked();
     });
 
-    expect(await screen.findByText(/Last mutation:/)).toHaveTextContent(
-      "toggleTask",
-    );
+    const writeReducerLabel = screen.getByText("Write reducer tests").closest("label");
+    if (!writeReducerLabel) {
+      throw new Error("Expected the task label row to exist");
+    }
+
+    const writeReducerRow = writeReducerLabel.closest("li");
+    if (!writeReducerRow) {
+      throw new Error("Expected the task list item to exist");
+    }
+
+    await user.click(within(writeReducerRow).getByRole("button", { name: "Delete" }));
+
+    expect(mockedDeleteStoredTask).toHaveBeenCalledWith("t1");
+    await waitFor(() => {
+      expect(screen.queryByText("Write reducer tests")).not.toBeInTheDocument();
+    });
+
+    deleteTaskRequest.resolve("t1");
+
+    await waitFor(() => {
+      expect(screen.queryByText("Write reducer tests")).not.toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(/Last mutation:/)).toHaveTextContent("deleteTask");
+    });
   });
 });

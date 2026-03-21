@@ -94,6 +94,30 @@ export const tasksApi = createApi({
         method: "PATCH",
       }),
       transformResponse: (response: TaskDto) => toTask(response),
+      async onQueryStarted({ id }, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          tasksApi.util.updateQueryData("getTasks", undefined, (draft) => {
+            const task = draft.find((entry) => entry.id === id);
+            if (task) {
+              task.completed = !task.completed;
+            }
+          }),
+        );
+
+        try {
+          const { data } = await queryFulfilled;
+          dispatch(
+            tasksApi.util.updateQueryData("getTasks", undefined, (draft) => {
+              const index = draft.findIndex((task) => task.id === id);
+              if (index >= 0) {
+                draft[index] = data;
+              }
+            }),
+          );
+        } catch {
+          patchResult.undo();
+        }
+      },
       invalidatesTags: (_result, _error, arg) => [
         { type: tasksApiConfig.tagType, id: arg.id },
         { type: tasksApiConfig.tagType, id: "LIST" },
@@ -106,6 +130,22 @@ export const tasksApi = createApi({
       }),
       transformResponse: (response: DeleteTaskResponseDto) =>
         fromDeleteTaskResponseDto(response),
+      async onQueryStarted({ id }, { dispatch, queryFulfilled }) {
+        const patchResult = dispatch(
+          tasksApi.util.updateQueryData("getTasks", undefined, (draft) => {
+            const index = draft.findIndex((task) => task.id === id);
+            if (index >= 0) {
+              draft.splice(index, 1);
+            }
+          }),
+        );
+
+        try {
+          await queryFulfilled;
+        } catch {
+          patchResult.undo();
+        }
+      },
       invalidatesTags: (_result, _error, arg) => [
         { type: tasksApiConfig.tagType, id: arg.id },
         { type: tasksApiConfig.tagType, id: "LIST" },
