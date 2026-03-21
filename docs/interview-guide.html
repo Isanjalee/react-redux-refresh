@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>React Redux Refresh - Day 1 to Day 8 Interview Guide</title>
+    <title>React Redux Refresh - Day 1 to Day 9 Interview Guide</title>
     <style>
       :root {
         --bg: #f5f1e8;
@@ -196,17 +196,17 @@
     <main class="page">
       <section class="hero">
         <p class="eyebrow">React Redux Refresh</p>
-        <h1>Day 1 to Day 8 Interview Guide</h1>
+        <h1>Day 1 to Day 9 Interview Guide</h1>
         <p class="summary">
           A printable study guide built from your full progress so far, from
-          Day 1 through Day 8, March 15, 2026. It covers React fundamentals,
+          Day 1 through Day 9, March 21, 2026. It covers React fundamentals,
           TypeScript, routing, local state, performance, Tailwind, feature
           architecture, Redux Toolkit, async thunks, normalized state,
           selectors, Redux DevTools, testing strategy, and production frontend
           architecture patterns.
         </p>
         <p class="small">
-          Coverage: Day 1, Day 2, Day 3, Day 4, Day 5, Day 6, Day 7, plus Day 8 work on RTK Query, cache-aware data flows, auto-generated hooks, and leaner server-state architecture. Update this file after each new learning day and regenerate the PDF.
+          Coverage: Day 1, Day 2, Day 3, Day 4, Day 5, Day 6, Day 7, Day 8, and Day 9 work on RTK Query, fetchBaseQuery, optimistic mutations, rollback safety, and more production-ready loading and error UX. Update this file after each new learning day and regenerate the PDF.
         </p>
       </section>
 
@@ -234,6 +234,7 @@
             <li>How to test reducers, thunks, and Redux-connected UI separately.</li>
             <li>How route boundaries, lazy loading, and profiling support production frontend scale.</li>
             <li>How RTK Query replaces repetitive async thunk boilerplate for server state.</li>
+            <li>How optimistic updates, rollback, DTO mapping, and fetchBaseQuery make server-state code more production-shaped.</li>
           </ul>
         </div>
       </div>
@@ -287,6 +288,11 @@
             <td>Day 8</td>
             <td>RTK Query for server state</td>
             <td>Replaced manual thunk-based fetching and mutations with an RTK Query API slice, generated hooks, cache invalidation, and endpoint-focused tests.</td>
+          </tr>
+          <tr>
+            <td>Day 9</td>
+            <td>Production-ready RTK Query flows</td>
+            <td>Moved to fetchBaseQuery, added shared API config, DTO mapping, normalized API errors, optimistic create/toggle/delete updates, rollback verification, and stronger loading, retry, and empty states.</td>
           </tr>
         </tbody>
       </table>
@@ -918,7 +924,90 @@ useAddTaskMutation()
         <p><span class="label">Answer:</span> Thunks are a general async orchestration tool. RTK Query is a specialized server-state layer with opinions about caching, invalidation, subscriptions, and generated hooks. Thunks can still be useful, but RTK Query is usually a better fit for standard CRUD-style data fetching.</p>
       </div>
 
-      <h2>14. Senior Frontend Interview Questions and Answers</h2>
+      <h2>14. Day 9 Production-Ready RTK Query Flows</h2>
+      <h3>What Changed in the Task App</h3>
+      <p>
+        Day 9 pushed the RTK Query setup closer to production frontend architecture.
+        The feature now uses <code>fetchBaseQuery</code>-style requests, a shared API
+        config module, DTO mapping between transport and domain models, normalized
+        error payloads, optimistic cache updates, rollback coverage, and stronger
+        retry and empty-state UX.
+      </p>
+      <ul>
+        <li><code>apiConfig.ts</code> now centralizes API base URL and task resource configuration.</li>
+        <li><code>taskDtos.ts</code> separates API payload shapes from the UI task model.</li>
+        <li><code>tasksHttp.ts</code> acts as a fetch-compatible transport adapter around the storage boundary.</li>
+        <li><code>tasksApi.ts</code> now uses <code>fetchBaseQuery</code>, DTO transforms, and optimistic cache patches.</li>
+        <li><code>apiErrors.ts</code> normalizes query and mutation failures into UI-safe messages.</li>
+        <li><code>tasksApi.test.ts</code> now verifies rollback behavior for failed optimistic mutations.</li>
+      </ul>
+
+      <h3>Why DTO Mapping Matters</h3>
+      <p>
+        A backend payload is not automatically the right shape for the UI. DTO mapping
+        keeps transport concerns such as field naming or date serialization separate from
+        the domain model the app actually renders. That makes backend changes easier to
+        absorb without leaking transport details through the feature.
+      </p>
+
+      <h3>Why Use <code>fetchBaseQuery</code></h3>
+      <p>
+        <code>fetchBaseQuery</code> gives RTK Query a more realistic request model with HTTP-style
+        methods, URLs, status-aware failures, and easier migration to a real backend later.
+        In this project, the fetch transport still routes through the storage boundary, but the
+        feature code now looks like a real API-driven frontend.
+      </p>
+
+      <h3>Optimistic Updates and Rollback</h3>
+      <p>
+        Day 9 introduced optimistic create, toggle, and delete mutations. The cache is patched
+        immediately so the interface feels fast, and each mutation keeps an undo handle so the
+        optimistic state can roll back if the request fails. This is a better production pattern
+        than waiting for every request before updating the UI.
+      </p>
+
+      <pre>mutation starts
+  -> patch cached task list immediately
+  -> UI updates right away
+request succeeds
+  -> keep or reconcile optimistic data
+request fails
+  -> undo cache patch
+  -> show normalized error message</pre>
+
+      <h3>Loading, Retry, and Empty States</h3>
+      <p>
+        Production UX is not just about successful requests. The task page now distinguishes
+        between initial blocking load failures, background refreshes, filter-specific empty states,
+        and retry actions. That makes the feature more resilient and easier to explain in an interview.
+      </p>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> Why introduce DTOs if the app only has one task model?</p>
+        <p><span class="label">Answer:</span> Because transport models and UI models change for different reasons. DTOs let the API evolve without forcing the whole UI and selector layer to adopt backend naming or serialization choices directly.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> What is the benefit of <code>fetchBaseQuery</code> over a custom fake query?</p>
+        <p><span class="label">Answer:</span> It moves the feature toward real HTTP semantics, gives you standard request configuration, and makes it easier to replace a mock transport with a real backend later without rewriting the endpoint layer.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> When should you patch cache data instead of invalidating and refetching?</p>
+        <p><span class="label">Answer:</span> Patch the cache when you want immediate UX feedback and you can safely predict the local result, such as add, toggle, or delete. Invalidate and refetch when the server is the source of truth for more complex recalculation or when local prediction is risky.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> Why is rollback important for optimistic updates?</p>
+        <p><span class="label">Answer:</span> Because optimistic UI without rollback can leave the client in a false state when the request fails. Rollback preserves responsiveness without sacrificing correctness.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> What should a production-ready loading and error experience include?</p>
+        <p><span class="label">Answer:</span> It should distinguish first-load blocking failures from background refreshes, provide retry paths, keep existing data visible when safe, and make empty states specific enough to explain what the user can do next.</p>
+      </div>
+
+      <h2>15. Senior Frontend Interview Questions and Answers</h2>
 
       <div class="qa">
         <p><span class="label">Q:</span> How do you decide whether state should live in a component, context, or Redux?</p>
@@ -970,12 +1059,12 @@ useAddTaskMutation()
         <p><span class="label">A:</span> Derived state is computed from a source of truth when needed. Duplicated state stores the same information in multiple places, which creates synchronization bugs.</p>
       </div>
 
-      <h2>15. How To Explain Your Project in an Interview</h2>
+      <h2>16. How To Explain Your Project in an Interview</h2>
       <p>
         A strong answer is structured. Do not just list libraries. Explain the
         problem, architectural choices, and tradeoffs.
       </p>
-      <pre>I built a task management learning project in React and TypeScript over eight structured days.
+      <pre>I built a task management learning project in React and TypeScript over nine structured days.
 I started with local state and controlled forms to reinforce data flow.
 Then I added Tailwind and reusable components while practicing memoization.
 After that I moved shared task state into Redux Toolkit with typed hooks and selectors.
@@ -984,9 +1073,10 @@ For Day 5, I normalized the task state with entity adapter, split selectors and 
 For Day 6, I added Vitest and React Testing Library, then wrote reducer tests, async-flow tests, component tests, and a Redux + UI integration test for the task page.
 For Day 7, I refactored the app around feature-level routing, lazy-loaded route and secondary panel chunks, introduced a shared app shell, and added profiling-aware render boundaries to make performance decisions more observable.
 For Day 8, I replaced manual thunk-based fetching and mutations with RTK Query, using an API slice, generated hooks, cache invalidation, and endpoint-focused tests to simplify server-state handling.
+For Day 9, I moved that setup toward production-style API architecture with fetchBaseQuery, DTO mapping, normalized API errors, optimistic cache updates, rollback coverage, and stronger retry and empty-state UX.
 The main goal was not feature count; it was learning how state architecture, testing, delivery boundaries, and server-state tooling evolve together as complexity grows.</pre>
 
-      <h2>16. Red Flags Interviewers Notice</h2>
+      <h2>17. Red Flags Interviewers Notice</h2>
       <div class="two-col">
         <ul>
           <li>Using <code>any</code> at critical boundaries.</li>
@@ -1004,10 +1094,11 @@ The main goal was not feature count; it was learning how state architecture, tes
           <li>Talking only about syntax instead of tradeoffs.</li>
           <li>Adding lazy loading everywhere without choosing sensible loading boundaries.</li>
           <li>Keeping manual thunk boilerplate after RTK Query already owns the server-state workflow.</li>
+          <li>Using optimistic updates without a rollback path when the request can fail.</li>
         </ul>
       </div>
 
-      <h2>17. Final Revision Checklist</h2>
+      <h2>18. Final Revision Checklist</h2>
       <ul>
         <li>Can you explain props, state, and controlled inputs clearly?</li>
         <li>Can you describe render, commit, reconciliation, and keys?</li>
@@ -1027,12 +1118,15 @@ The main goal was not feature count; it was learning how state architecture, tes
         <li>Can you explain the difference between a query and a mutation?</li>
         <li>Can you explain how caching and invalidation work in RTK Query?</li>
         <li>Can you explain how auto-generated hooks reduce boilerplate?</li>
+        <li>Can you explain when DTO mapping protects the UI from backend shape changes?</li>
+        <li>Can you explain when optimistic cache patching is better than invalidation alone?</li>
+        <li>Can you explain why rollback is necessary for optimistic mutations?</li>
         <li>Can you explain how parameters and state move through your app?</li>
         <li>Can you discuss tradeoffs like a senior engineer rather than just list APIs?</li>
       </ul>
 
       <p class="small">
-        Suggested next update after Day 8: optimistic updates, real HTTP transport with fetchBaseQuery, route prefetching, server-backed pagination, and end-to-end browser coverage.
+        Suggested next update after Day 9: replace the fetch adapter with a real backend, add server-backed pagination, explore optimistic clear-completed handling, and add end-to-end browser coverage.
       </p>
     </main>
   </body>
