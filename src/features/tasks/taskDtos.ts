@@ -1,10 +1,27 @@
-import type { Task } from "./types";
+import type { Task, TaskCounts, TaskFilter, TaskListQuery, TaskPage } from "./types";
 
 export type TaskDto = {
   id: string;
   title: string;
   isCompleted: boolean;
   createdAtIso: string;
+};
+
+export type TaskCountsDto = TaskCounts;
+
+export type TaskPageRequestDto = TaskListQuery;
+
+export type TaskPageDto = {
+  items: TaskDto[];
+  page: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  filter: TaskFilter;
+  search: string;
+  counts: TaskCountsDto;
 };
 
 export type CreateTaskRequestDto = {
@@ -39,6 +56,24 @@ export function toTask(taskDto: TaskDto): Task {
 
 export function toTaskList(taskDtos: TaskDto[]) {
   return taskDtos.map(toTask);
+}
+
+export function toTaskPageDto(taskPage: TaskPage): TaskPageDto {
+  return {
+    ...taskPage,
+    items: taskPage.items.map(toTaskDto),
+  };
+}
+
+export function toTaskPage(taskPageDto: TaskPageDto): TaskPage {
+  return {
+    ...taskPageDto,
+    items: toTaskList(taskPageDto.items),
+  };
+}
+
+export function toTaskPageRequestDto(query: TaskListQuery): TaskPageRequestDto {
+  return query;
 }
 
 export function toCreateTaskRequestDto(title: string): CreateTaskRequestDto {
