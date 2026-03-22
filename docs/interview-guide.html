@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>React Redux Refresh - Day 1 to Day 9 Interview Guide</title>
+    <title>React Redux Refresh - Day 1 to Day 10 Interview Guide</title>
     <style>
       :root {
         --bg: #f5f1e8;
@@ -196,17 +196,17 @@
     <main class="page">
       <section class="hero">
         <p class="eyebrow">React Redux Refresh</p>
-        <h1>Day 1 to Day 9 Interview Guide</h1>
+        <h1>Day 1 to Day 10 Interview Guide</h1>
         <p class="summary">
           A printable study guide built from your full progress so far, from
-          Day 1 through Day 9, March 21, 2026. It covers React fundamentals,
+          Day 1 through Day 10, March 22, 2026. It covers React fundamentals,
           TypeScript, routing, local state, performance, Tailwind, feature
           architecture, Redux Toolkit, async thunks, normalized state,
           selectors, Redux DevTools, testing strategy, and production frontend
           architecture patterns.
         </p>
         <p class="small">
-          Coverage: Day 1, Day 2, Day 3, Day 4, Day 5, Day 6, Day 7, Day 8, and Day 9 work on RTK Query, fetchBaseQuery, optimistic mutations, rollback safety, and more production-ready loading and error UX. Update this file after each new learning day and regenerate the PDF.
+          Coverage: Day 1, Day 2, Day 3, Day 4, Day 5, Day 6, Day 7, Day 8, Day 9, and Day 10 now cover RTK Query, fetchBaseQuery, optimistic mutations, rollback safety, URL-driven server-state screens, paginated caching, and more production-ready loading and empty-state UX. Update this file after each new learning day and regenerate the PDF.
         </p>
       </section>
 
@@ -235,6 +235,7 @@
             <li>How route boundaries, lazy loading, and profiling support production frontend scale.</li>
             <li>How RTK Query replaces repetitive async thunk boilerplate for server state.</li>
             <li>How optimistic updates, rollback, DTO mapping, and fetchBaseQuery make server-state code more production-shaped.</li>
+            <li>How URL query state, pagination, and prefetching change scalable list-screen architecture.</li>
           </ul>
         </div>
       </div>
@@ -293,6 +294,11 @@
             <td>Day 9</td>
             <td>Production-ready RTK Query flows</td>
             <td>Moved to fetchBaseQuery, added shared API config, DTO mapping, normalized API errors, optimistic create/toggle/delete updates, rollback verification, and stronger loading, retry, and empty states.</td>
+          </tr>
+          <tr>
+            <td>Day 10</td>
+            <td>Scalable query-driven list screens</td>
+            <td>Moved task search, filter, and page state into the URL, upgraded getTasks into a paginated RTK Query endpoint, added toolbar and pagination components, prefetched adjacent pages, and refined query-specific loading and empty states.</td>
           </tr>
         </tbody>
       </table>
@@ -1007,7 +1013,80 @@ request fails
         <p><span class="label">Answer:</span> It should distinguish first-load blocking failures from background refreshes, provide retry paths, keep existing data visible when safe, and make empty states specific enough to explain what the user can do next.</p>
       </div>
 
-      <h2>15. Senior Frontend Interview Questions and Answers</h2>
+      <h2>15. Day 10 URL-Driven Paginated Task Screens</h2>
+      <h3>What Changed in the Task App</h3>
+      <p>
+        Day 10 turned the task screen into a more production-shaped list page. Query state now
+        lives in the URL, the RTK Query endpoint accepts paginated arguments, transport and domain
+        mapping now cover paginated responses, and the UI includes reusable toolbar and pagination
+        controls with adjacent-page prefetching.
+      </p>
+      <ul>
+        <li><code>TasksPage.tsx</code> now reads filter, search, and page from <code>useSearchParams</code>.</li>
+        <li><code>tasksApi.ts</code> now models <code>getTasks</code> as a paginated query keyed by <code>TaskListQuery</code>.</li>
+        <li><code>taskDtos.ts</code> and <code>tasksHttp.ts</code> now map and transport paginated task payloads.</li>
+        <li><code>TasksQueryToolbar.tsx</code> and <code>TasksPagination.tsx</code> split search/filter and paging UI into reusable boundaries.</li>
+        <li><code>TasksPage.integration.test.tsx</code> now verifies URL-driven search, page navigation, and paginated optimistic mutations together.</li>
+      </ul>
+
+      <h3>Why URL Query State Matters</h3>
+      <p>
+        Search, filter, and page are navigation concerns as much as UI state. Putting them in the URL
+        makes the screen shareable, refresh-safe, and easier to reason about when the user moves between
+        pages or sends a link to someone else. This is a common production requirement for list screens.
+      </p>
+
+      <h3>Paginated RTK Query and Cache Keys</h3>
+      <p>
+        Once a query depends on page, search, and filter, the cache key is no longer just <code>getTasks</code>.
+        Each query-arg combination represents a separate cached result. That is why the task endpoint now
+        accepts a full <code>TaskListQuery</code> object and why optimistic updates need to know which page view
+        they are patching.
+      </p>
+
+      <pre>URL search params
+  -> TaskListQuery
+  -> useGetTasksQuery(query)
+  -> cache key includes page + search + filter
+page changes
+  -> new query arg
+  -> separate cached result or fetch
+prefetch next page
+  -> warmer navigation path</pre>
+
+      <h3>Prefetching and Stable UX</h3>
+      <p>
+        The task page now prefetches adjacent pages when metadata says they exist. That does not guarantee
+        every navigation is instant, but it improves perceived performance for common next-page and previous-page
+        moves. Combined with query-aware empty and refresh states, the list feels much closer to a real data screen.
+      </p>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> Why store search and pagination state in the URL instead of local component state?</p>
+        <p><span class="label">Answer:</span> Because they affect navigation and shareability. URL state survives refreshes, supports deep links, and more accurately models a list page than hidden local state does.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> How do RTK Query query arguments affect caching?</p>
+        <p><span class="label">Answer:</span> Each unique argument combination creates a distinct cache entry. If page, search, or filter changes, RTK Query treats that as a different query result and caches it separately.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> Why prefetch the next page of a paginated list?</p>
+        <p><span class="label">Answer:</span> It reduces the wait the user feels during common navigation paths. Prefetching is useful when the next action is predictable and the additional network cost is acceptable.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> What changes when optimistic updates are used on paginated data?</p>
+        <p><span class="label">Answer:</span> The mutation needs to know which cached page or query context to patch. Optimistic logic becomes view-aware because the user may be looking at only one filtered page of a larger dataset.</p>
+      </div>
+
+      <div class="qa">
+        <p><span class="label">Interview question:</span> What makes a list screen architecture scalable?</p>
+        <p><span class="label">Answer:</span> Clear separation between URL state, query args, transport mapping, cache behavior, and UI controls. That keeps search, filter, pagination, and loading logic from collapsing into one oversized component.</p>
+      </div>
+
+      <h2>16. Senior Frontend Interview Questions and Answers</h2>
 
       <div class="qa">
         <p><span class="label">Q:</span> How do you decide whether state should live in a component, context, or Redux?</p>
@@ -1059,12 +1138,12 @@ request fails
         <p><span class="label">A:</span> Derived state is computed from a source of truth when needed. Duplicated state stores the same information in multiple places, which creates synchronization bugs.</p>
       </div>
 
-      <h2>16. How To Explain Your Project in an Interview</h2>
+      <h2>17. How To Explain Your Project in an Interview</h2>
       <p>
         A strong answer is structured. Do not just list libraries. Explain the
         problem, architectural choices, and tradeoffs.
       </p>
-      <pre>I built a task management learning project in React and TypeScript over nine structured days.
+      <pre>I built a task management learning project in React and TypeScript over ten structured days.
 I started with local state and controlled forms to reinforce data flow.
 Then I added Tailwind and reusable components while practicing memoization.
 After that I moved shared task state into Redux Toolkit with typed hooks and selectors.
@@ -1074,9 +1153,10 @@ For Day 6, I added Vitest and React Testing Library, then wrote reducer tests, a
 For Day 7, I refactored the app around feature-level routing, lazy-loaded route and secondary panel chunks, introduced a shared app shell, and added profiling-aware render boundaries to make performance decisions more observable.
 For Day 8, I replaced manual thunk-based fetching and mutations with RTK Query, using an API slice, generated hooks, cache invalidation, and endpoint-focused tests to simplify server-state handling.
 For Day 9, I moved that setup toward production-style API architecture with fetchBaseQuery, DTO mapping, normalized API errors, optimistic cache updates, rollback coverage, and stronger retry and empty-state UX.
+For Day 10, I turned the task page into a URL-driven paginated list screen with query-param state, paginated RTK Query caching, reusable toolbar and pagination controls, adjacent-page prefetching, and more specific loading and empty states.
 The main goal was not feature count; it was learning how state architecture, testing, delivery boundaries, and server-state tooling evolve together as complexity grows.</pre>
 
-      <h2>17. Red Flags Interviewers Notice</h2>
+      <h2>18. Red Flags Interviewers Notice</h2>
       <div class="two-col">
         <ul>
           <li>Using <code>any</code> at critical boundaries.</li>
@@ -1095,10 +1175,12 @@ The main goal was not feature count; it was learning how state architecture, tes
           <li>Adding lazy loading everywhere without choosing sensible loading boundaries.</li>
           <li>Keeping manual thunk boilerplate after RTK Query already owns the server-state workflow.</li>
           <li>Using optimistic updates without a rollback path when the request can fail.</li>
+          <li>Keeping search, filter, and page state hidden in local state when the screen should be linkable.</li>
+          <li>Ignoring query-key design when paginated or filtered server data is cached.</li>
         </ul>
       </div>
 
-      <h2>18. Final Revision Checklist</h2>
+      <h2>19. Final Revision Checklist</h2>
       <ul>
         <li>Can you explain props, state, and controlled inputs clearly?</li>
         <li>Can you describe render, commit, reconciliation, and keys?</li>
@@ -1121,13 +1203,22 @@ The main goal was not feature count; it was learning how state architecture, tes
         <li>Can you explain when DTO mapping protects the UI from backend shape changes?</li>
         <li>Can you explain when optimistic cache patching is better than invalidation alone?</li>
         <li>Can you explain why rollback is necessary for optimistic mutations?</li>
+        <li>Can you explain why URL query params are a better fit than local state for searchable paginated lists?</li>
+        <li>Can you explain how RTK Query query args change cache keys and refetch behavior?</li>
+        <li>Can you explain when adjacent-page prefetching improves UX and when it is unnecessary?</li>
         <li>Can you explain how parameters and state move through your app?</li>
         <li>Can you discuss tradeoffs like a senior engineer rather than just list APIs?</li>
       </ul>
 
       <p class="small">
-        Suggested next update after Day 9: replace the fetch adapter with a real backend, add server-backed pagination, explore optimistic clear-completed handling, and add end-to-end browser coverage.
+        Suggested next update after Day 10: replace the fetch adapter with a real backend, add server-backed sorting and richer metadata, explore optimistic clear-completed handling, and add end-to-end browser coverage for multi-page flows.
       </p>
     </main>
   </body>
 </html>
+
+
+
+
+
+
