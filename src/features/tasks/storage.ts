@@ -1,5 +1,5 @@
-import { makeId } from "./taskUtils";
-import type { Task } from "./types";
+import { makeId, filterTasks, getTaskCounts, normalizeTaskListQuery, searchTasks } from "./taskUtils";
+import type { Task, TaskListQuery, TaskPage } from "./types";
 
 const STORAGE_KEY = "rr_refresh_tasks_v4";
 const STORAGE_DELAY_MS = 250;
@@ -39,9 +39,37 @@ function writeTasks(tasks: Task[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
 }
 
-export async function fetchStoredTasks(): Promise<Task[]> {
+function paginateTasks(tasks: Task[], query: TaskListQuery): TaskPage {
+  const normalizedQuery = normalizeTaskListQuery(query);
+  const filteredTasks = searchTasks(
+    filterTasks(tasks, normalizedQuery.filter),
+    normalizedQuery.search,
+  );
+  const totalItems = filteredTasks.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / normalizedQuery.pageSize));
+  const page = Math.min(normalizedQuery.page, totalPages);
+  const start = (page - 1) * normalizedQuery.pageSize;
+  const items = filteredTasks.slice(start, start + normalizedQuery.pageSize);
+
+  return {
+    items,
+    page,
+    pageSize: normalizedQuery.pageSize,
+    totalItems,
+    totalPages,
+    hasNextPage: page < totalPages,
+    hasPreviousPage: page > 1,
+    filter: normalizedQuery.filter,
+    search: normalizedQuery.search,
+    counts: getTaskCounts(tasks),
+  };
+}
+
+export async function fetchStoredTasksPage(
+  query: Partial<TaskListQuery> = {},
+): Promise<TaskPage> {
   await delay(STORAGE_DELAY_MS);
-  return readTasks();
+  return paginateTasks(readTasks(), normalizeTaskListQuery(query));
 }
 
 export async function createStoredTask(title: string): Promise<Task> {
