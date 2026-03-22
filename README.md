@@ -186,6 +186,17 @@ src/
 - Cache patching vs invalidation
 - Production-style loading and error UX
 
+### Day 10
+
+- URL-driven task query state
+- Search, filter, and pagination query args
+- Paginated RTK Query responses
+- DTO mapping for paginated task data
+- Adjacent-page prefetching
+- Query-aware loading and empty states
+- Reusable search and pagination controls
+- Scalable list-screen architecture
+
 ## Current Status
 
 - Day 1 complete
@@ -197,41 +208,42 @@ src/
 - Day 7 complete
 - Day 8 complete
 - Day 9 complete
+- Day 10 complete
 
-## Day 9 Goal
+## Day 10 Goal
 
-Upgrade the task app from local/demo-style RTK Query usage toward a more production-like frontend data flow by learning:
+Upgrade the task page into a more production-shaped server-state screen by learning:
 
-- Real API service boundaries
-- Request and response typing
-- Optimistic updates
-- Rollback on failure
-- Cache patching vs invalidation
-- Environment-aware API setup
-- Cleaner loading and error UX
+- URL-driven state
+- Search and filter query params
+- Pagination through RTK Query query args
+- Paginated DTO mapping
+- Adjacent-page prefetching
+- Query-aware loading, refresh, and empty states
+- Reusable toolbar and pagination UI boundaries
 
-This day is focused on making the app feel closer to a real API-driven frontend instead of a local persistence demo.
+This day is focused on building the kind of scalable list-screen architecture large React applications use when filters, search, and pagination must stay shareable and cache-aware.
 
-## Day 9 Commit Plan
+## Day 10 Commit Plan
 
-1. Add the Day 9 roadmap and goals to the docs
-2. Add shared environment-based API config
-3. Move `tasksApi` to `fetchBaseQuery`
-4. Add task DTO and mapper helpers
-5. Normalize API errors for UI use
-6. Add optimistic create task behavior
-7. Add optimistic toggle and delete behavior
-8. Add rollback for failed optimistic mutations
-9. Improve loading, empty, and error UX
+1. Add the Day 10 roadmap and goals to the docs
+2. Sync task query state with URL params
+3. Support paginated RTK Query args
+4. Add paginated task DTO mapping
+5. Add task search and filter toolbar
+6. Add task pagination controls
+7. Prefetch adjacent task pages
+8. Improve query-driven loading and empty states
+9. Add test coverage for paginated task flows
 10. Update the interview guide and PDF
 
 ## Next Improvements
 
 - Replace the fetch adapter with a real backend service
+- Persist URL-driven query state across more feature routes
+- Add server-backed sorting and richer list metadata
 - Add optimistic handling for clear-completed mutations
-- Add pagination or filtering against server-backed endpoints
-- Add retry/backoff strategy for unstable network conditions
-- E2E coverage for full browser flows
+- E2E coverage for multi-page browser flows
 
 ## Installation
 
@@ -244,4 +256,8 @@ npm run build
 
 ## Purpose
 
-This project is part of a structured React refresh journey aimed at strengthening fundamentals and practicing the kinds of routing, state, testing, caching, and performance decisions used in production frontend applications.
+This project is part of a structured React refresh journey aimed at strengthening fundamentals and practicing the kinds of routing, state, testing, caching, pagination, and performance decisions used in production frontend applications.
+
+
+
+
