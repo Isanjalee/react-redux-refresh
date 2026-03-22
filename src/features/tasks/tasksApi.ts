@@ -3,19 +3,21 @@ import {
   resolveApiBaseUrl,
   tasksApiConfig,
 } from "../../shared/api/apiConfig";
-import { makeId } from "./taskUtils";
+import { makeId, matchesTaskQuery, normalizeTaskListQuery } from "./taskUtils";
 import {
   fromClearCompletedResponseDto,
   fromDeleteTaskResponseDto,
   toCreateTaskRequestDto,
   toTask,
-  toTaskList,
+  toTaskPage,
+  toTaskPageRequestDto,
   type ClearCompletedResponseDto,
   type DeleteTaskResponseDto,
   type TaskDto,
+  type TaskPageDto,
 } from "./taskDtos";
 import { taskApiFetch } from "./tasksHttp";
-import type { Task } from "./types";
+import type { Task, TaskListQuery, TaskPage } from "./types";
 
 function createOptimisticTask(title: string): Task {
   return {
@@ -26,6 +28,99 @@ function createOptimisticTask(title: string): Task {
   };
 }
 
+type TaskMutationViewArg = {
+  view: TaskListQuery;
+};
+
+type AddTaskArg = TaskMutationViewArg & {
+  title: string;
+};
+
+type ToggleTaskArg = TaskMutationViewArg & {
+  id: string;
+};
+
+type DeleteTaskArg = TaskMutationViewArg & {
+  id: string;
+};
+
+function recalculatePagination(page: TaskPage) {
+  page.totalPages = Math.max(1, Math.ceil(page.totalItems / page.pageSize));
+  if (page.page > page.totalPages) {
+    page.page = page.totalPages;
+  }
+  page.hasNextPage = page.page < page.totalPages;
+  page.hasPreviousPage = page.page > 1;
+}
+
+function patchPageForAdd(page: TaskPage, task: Task, query: TaskListQuery) {
+  page.counts.total += 1;
+  page.counts.active += 1;
+
+  if (!matchesTaskQuery(task, query)) {
+    return;
+  }
+
+  page.totalItems += 1;
+  recalculatePagination(page);
+
+  if (query.page === 1) {
+    page.items.unshift(task);
+    if (page.items.length > page.pageSize) {
+      page.items.pop();
+    }
+  }
+}
+
+function patchPageForToggle(page: TaskPage, taskId: string, query: TaskListQuery) {
+  const taskIndex = page.items.findIndex((task) => task.id === taskId);
+  if (taskIndex === -1) {
+    return null;
+  }
+
+  const currentTask = page.items[taskIndex];
+  const nextTask = {
+    ...currentTask,
+    completed: !currentTask.completed,
+  };
+
+  if (currentTask.completed) {
+    page.counts.completed -= 1;
+    page.counts.active += 1;
+  } else {
+    page.counts.completed += 1;
+    page.counts.active -= 1;
+  }
+
+  if (matchesTaskQuery(nextTask, query)) {
+    page.items[taskIndex] = nextTask;
+  } else {
+    page.items.splice(taskIndex, 1);
+    page.totalItems = Math.max(0, page.totalItems - 1);
+    recalculatePagination(page);
+  }
+
+  return nextTask;
+}
+
+function patchPageForDelete(page: TaskPage, taskId: string) {
+  const taskIndex = page.items.findIndex((task) => task.id === taskId);
+  if (taskIndex === -1) {
+    return null;
+  }
+
+  const [removedTask] = page.items.splice(taskIndex, 1);
+  page.counts.total -= 1;
+  if (removedTask.completed) {
+    page.counts.completed -= 1;
+  } else {
+    page.counts.active -= 1;
+  }
+  page.totalItems = Math.max(0, page.totalItems - 1);
+  recalculatePagination(page);
+  return removedTask;
+}
+
 export const tasksApi = createApi({
   reducerPath: "tasksApi",
   baseQuery: fetchBaseQuery({
@@ -34,13 +129,16 @@ export const tasksApi = createApi({
   }),
   tagTypes: [tasksApiConfig.tagType],
   endpoints: (builder) => ({
-    getTasks: builder.query<Task[], void>({
-      query: () => tasksApiConfig.resourcePath,
-      transformResponse: (response: TaskDto[]) => toTaskList(response),
+    getTasks: builder.query<TaskPage, TaskListQuery>({
+      query: (query) => ({
+        url: tasksApiConfig.resourcePath,
+        params: toTaskPageRequestDto(normalizeTaskListQuery(query)),
+      }),
+      transformResponse: (response: TaskPageDto) => toTaskPage(response),
       providesTags: (result) =>
         result
           ? [
-              ...result.map((task) => ({
+              ...result.items.map((task) => ({
                 type: tasksApiConfig.tagType,
                 id: task.id,
               })),
@@ -48,37 +146,39 @@ export const tasksApi = createApi({
             ]
           : [{ type: tasksApiConfig.tagType, id: "LIST" }],
     }),
-    addTask: builder.mutation<Task, { title: string }>({
+    addTask: builder.mutation<Task, AddTaskArg>({
       query: ({ title }) => ({
         url: tasksApiConfig.resourcePath,
         method: "POST",
         body: toCreateTaskRequestDto(title),
       }),
       transformResponse: (response: TaskDto) => toTask(response),
-      async onQueryStarted({ title }, { dispatch, queryFulfilled }) {
+      async onQueryStarted({ title, view }, { dispatch, queryFulfilled }) {
         const optimisticTask = createOptimisticTask(title);
         const patchResult = dispatch(
-          tasksApi.util.updateQueryData("getTasks", undefined, (draft) => {
-            draft.unshift(optimisticTask);
+          tasksApi.util.updateQueryData("getTasks", view, (draft) => {
+            patchPageForAdd(draft, optimisticTask, view);
           }),
         );
 
         try {
           const { data } = await queryFulfilled;
           dispatch(
-            tasksApi.util.updateQueryData("getTasks", undefined, (draft) => {
-              const optimisticIndex = draft.findIndex(
+            tasksApi.util.updateQueryData("getTasks", view, (draft) => {
+              const optimisticIndex = draft.items.findIndex(
                 (task) => task.id === optimisticTask.id,
               );
 
               if (optimisticIndex >= 0) {
-                draft[optimisticIndex] = data;
+                draft.items[optimisticIndex] = data;
                 return;
               }
 
-              const existingIndex = draft.findIndex((task) => task.id === data.id);
-              if (existingIndex === -1) {
-                draft.unshift(data);
+              if (view.page === 1 && matchesTaskQuery(data, view)) {
+                draft.items.unshift(data);
+                if (draft.items.length > draft.pageSize) {
+                  draft.items.pop();
+                }
               }
             }),
           );
@@ -88,29 +188,26 @@ export const tasksApi = createApi({
       },
       invalidatesTags: [{ type: tasksApiConfig.tagType, id: "LIST" }],
     }),
-    toggleTask: builder.mutation<Task, { id: string }>({
+    toggleTask: builder.mutation<Task, ToggleTaskArg>({
       query: ({ id }) => ({
         url: `${tasksApiConfig.resourcePath}/${id}/toggle`,
         method: "PATCH",
       }),
       transformResponse: (response: TaskDto) => toTask(response),
-      async onQueryStarted({ id }, { dispatch, queryFulfilled }) {
+      async onQueryStarted({ id, view }, { dispatch, queryFulfilled }) {
         const patchResult = dispatch(
-          tasksApi.util.updateQueryData("getTasks", undefined, (draft) => {
-            const task = draft.find((entry) => entry.id === id);
-            if (task) {
-              task.completed = !task.completed;
-            }
+          tasksApi.util.updateQueryData("getTasks", view, (draft) => {
+            patchPageForToggle(draft, id, view);
           }),
         );
 
         try {
           const { data } = await queryFulfilled;
           dispatch(
-            tasksApi.util.updateQueryData("getTasks", undefined, (draft) => {
-              const index = draft.findIndex((task) => task.id === id);
+            tasksApi.util.updateQueryData("getTasks", view, (draft) => {
+              const index = draft.items.findIndex((task) => task.id === id);
               if (index >= 0) {
-                draft[index] = data;
+                draft.items[index] = data;
               }
             }),
           );
@@ -123,20 +220,17 @@ export const tasksApi = createApi({
         { type: tasksApiConfig.tagType, id: "LIST" },
       ],
     }),
-    deleteTask: builder.mutation<string, { id: string }>({
+    deleteTask: builder.mutation<string, DeleteTaskArg>({
       query: ({ id }) => ({
         url: `${tasksApiConfig.resourcePath}/${id}`,
         method: "DELETE",
       }),
       transformResponse: (response: DeleteTaskResponseDto) =>
         fromDeleteTaskResponseDto(response),
-      async onQueryStarted({ id }, { dispatch, queryFulfilled }) {
+      async onQueryStarted({ id, view }, { dispatch, queryFulfilled }) {
         const patchResult = dispatch(
-          tasksApi.util.updateQueryData("getTasks", undefined, (draft) => {
-            const index = draft.findIndex((task) => task.id === id);
-            if (index >= 0) {
-              draft.splice(index, 1);
-            }
+          tasksApi.util.updateQueryData("getTasks", view, (draft) => {
+            patchPageForDelete(draft, id);
           }),
         );
 
