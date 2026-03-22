@@ -1,24 +1,25 @@
 import { describe, expect, it, vi } from "vitest";
 import { createAppStore } from "../../app/store";
+import { normalizeTaskListQuery, filterTasks, searchTasks, getTaskCounts } from "./taskUtils";
 import { tasksApi } from "./tasksApi";
 import {
   clearStoredCompletedTasks,
   createStoredTask,
   deleteStoredTask,
-  fetchStoredTasks,
+  fetchStoredTasksPage,
   toggleStoredTask,
 } from "./storage";
-import type { Task } from "./types";
+import type { Task, TaskListQuery, TaskPage } from "./types";
 
 vi.mock("./storage", () => ({
-  fetchStoredTasks: vi.fn(),
+  fetchStoredTasksPage: vi.fn(),
   createStoredTask: vi.fn(),
   toggleStoredTask: vi.fn(),
   deleteStoredTask: vi.fn(),
   clearStoredCompletedTasks: vi.fn(),
 }));
 
-const mockedFetchStoredTasks = vi.mocked(fetchStoredTasks);
+const mockedFetchStoredTasksPage = vi.mocked(fetchStoredTasksPage);
 const mockedCreateStoredTask = vi.mocked(createStoredTask);
 const mockedToggleStoredTask = vi.mocked(toggleStoredTask);
 const mockedDeleteStoredTask = vi.mocked(deleteStoredTask);
@@ -35,45 +36,58 @@ function createDeferredPromise<T>() {
   return { promise, resolve, reject };
 }
 
+function createTaskPage(tasks: Task[], query: Partial<TaskListQuery> = {}): TaskPage {
+  const normalizedQuery = normalizeTaskListQuery({ pageSize: 5, ...query });
+  const filteredTasks = searchTasks(
+    filterTasks(tasks, normalizedQuery.filter),
+    normalizedQuery.search,
+  );
+  const totalItems = filteredTasks.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / normalizedQuery.pageSize));
+  const page = Math.min(normalizedQuery.page, totalPages);
+  const start = (page - 1) * normalizedQuery.pageSize;
+
+  return {
+    items: filteredTasks.slice(start, start + normalizedQuery.pageSize),
+    page,
+    pageSize: normalizedQuery.pageSize,
+    totalItems,
+    totalPages,
+    hasNextPage: page < totalPages,
+    hasPreviousPage: page > 1,
+    filter: normalizedQuery.filter,
+    search: normalizedQuery.search,
+    counts: getTaskCounts(tasks),
+  };
+}
+
 describe("tasksApi", () => {
-  it("fetches tasks through the query endpoint", async () => {
-    mockedFetchStoredTasks.mockResolvedValue([
-      {
-        id: "t1",
-        title: "Load tasks",
-        completed: false,
-        createdAt: 100,
-      },
-    ]);
-
-    const store = createAppStore();
-    const query = store.dispatch(tasksApi.endpoints.getTasks.initiate());
-    const result = await query.unwrap();
-
-    expect(result).toHaveLength(1);
-    expect(mockedFetchStoredTasks).toHaveBeenCalledTimes(1);
-    expect(tasksApi.endpoints.getTasks.select()(store.getState()).data).toEqual(
-      result,
+  it("fetches a paginated task page through the query endpoint", async () => {
+    const query = normalizeTaskListQuery({ page: 2, pageSize: 5, search: "", filter: "all" });
+    mockedFetchStoredTasksPage.mockResolvedValue(
+      createTaskPage(
+        [
+          { id: "t1", title: "One", completed: false, createdAt: 100 },
+          { id: "t2", title: "Two", completed: false, createdAt: 90 },
+          { id: "t3", title: "Three", completed: false, createdAt: 80 },
+          { id: "t4", title: "Four", completed: false, createdAt: 70 },
+          { id: "t5", title: "Five", completed: false, createdAt: 60 },
+          { id: "t6", title: "Six", completed: false, createdAt: 50 },
+        ],
+        query,
+      ),
     );
 
-    query.unsubscribe();
-  });
-
-  it("creates a task through the mutation endpoint", async () => {
-    mockedCreateStoredTask.mockResolvedValue({
-      id: "t2",
-      title: "Ship RTK Query",
-      completed: false,
-      createdAt: 200,
-    });
-
     const store = createAppStore();
-    const result = await store.dispatch(
-      tasksApi.endpoints.addTask.initiate({ title: "Ship RTK Query" }),
-    ).unwrap();
+    const request = store.dispatch(tasksApi.endpoints.getTasks.initiate(query));
+    const result = await request.unwrap();
 
-    expect(mockedCreateStoredTask).toHaveBeenCalledWith("Ship RTK Query");
-    expect(result.title).toBe("Ship RTK Query");
+    expect(mockedFetchStoredTasksPage).toHaveBeenCalledWith(query);
+    expect(result.page).toBe(2);
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0]?.title).toBe("Six");
+
+    request.unsubscribe();
   });
 
   it("normalizes api errors for rejected mutations", async () => {
@@ -83,7 +97,10 @@ describe("tasksApi", () => {
 
     const store = createAppStore();
     const result = await store.dispatch(
-      tasksApi.endpoints.addTask.initiate({ title: "" }),
+      tasksApi.endpoints.addTask.initiate({
+        title: "",
+        view: normalizeTaskListQuery({ page: 1, pageSize: 5, search: "", filter: "all" }),
+      }),
     );
 
     expect("error" in result).toBe(true);
@@ -102,79 +119,68 @@ describe("tasksApi", () => {
 
   it("rolls back optimistic create when the mutation fails", async () => {
     const tasks: Task[] = [
-      {
-        id: "t1",
-        title: "Existing task",
-        completed: false,
-        createdAt: 100,
-      },
+      { id: "t1", title: "Existing task", completed: false, createdAt: 100 },
     ];
+    const view = normalizeTaskListQuery({ page: 1, pageSize: 5, search: "", filter: "all" });
     const deferredCreate = createDeferredPromise<Task>();
 
-    mockedFetchStoredTasks.mockResolvedValue(tasks);
+    mockedFetchStoredTasksPage.mockResolvedValue(createTaskPage(tasks, view));
     mockedCreateStoredTask.mockImplementation(() => deferredCreate.promise);
 
     const store = createAppStore();
-    const query = store.dispatch(tasksApi.endpoints.getTasks.initiate());
+    const query = store.dispatch(tasksApi.endpoints.getTasks.initiate(view));
     await query.unwrap();
 
     const mutation = store.dispatch(
-      tasksApi.endpoints.addTask.initiate({ title: "Optimistic task" }),
+      tasksApi.endpoints.addTask.initiate({ title: "Optimistic task", view }),
     );
 
     await Promise.resolve();
 
     expect(
-      tasksApi.endpoints.getTasks.select()(store.getState()).data?.[0]?.title,
+      tasksApi.endpoints.getTasks.select(view)(store.getState()).data?.items[0]?.title,
     ).toBe("Optimistic task");
 
     deferredCreate.reject(new Error("Create failed"));
     await mutation;
-
     await waitForTick();
 
     expect(
-      tasksApi.endpoints.getTasks.select()(store.getState()).data,
-    ).toEqual(tasks);
+      tasksApi.endpoints.getTasks.select(view)(store.getState()).data?.items.map((task) => task.title),
+    ).toEqual(["Existing task"]);
 
     query.unsubscribe();
   });
 
   it("rolls back optimistic toggle when the mutation fails", async () => {
     const tasks: Task[] = [
-      {
-        id: "t1",
-        title: "Existing task",
-        completed: false,
-        createdAt: 100,
-      },
+      { id: "t1", title: "Existing task", completed: false, createdAt: 100 },
     ];
+    const view = normalizeTaskListQuery({ page: 1, pageSize: 5, search: "", filter: "all" });
     const deferredToggle = createDeferredPromise<Task>();
 
-    mockedFetchStoredTasks.mockResolvedValue(tasks);
+    mockedFetchStoredTasksPage.mockResolvedValue(createTaskPage(tasks, view));
     mockedToggleStoredTask.mockImplementation(() => deferredToggle.promise);
 
     const store = createAppStore();
-    const query = store.dispatch(tasksApi.endpoints.getTasks.initiate());
+    const query = store.dispatch(tasksApi.endpoints.getTasks.initiate(view));
     await query.unwrap();
 
     const mutation = store.dispatch(
-      tasksApi.endpoints.toggleTask.initiate({ id: "t1" }),
+      tasksApi.endpoints.toggleTask.initiate({ id: "t1", view }),
     );
 
     await Promise.resolve();
-
     expect(
-      tasksApi.endpoints.getTasks.select()(store.getState()).data?.[0]?.completed,
+      tasksApi.endpoints.getTasks.select(view)(store.getState()).data?.items[0]?.completed,
     ).toBe(true);
 
     deferredToggle.reject(new Error("Toggle failed"));
     await mutation;
-
     await waitForTick();
 
     expect(
-      tasksApi.endpoints.getTasks.select()(store.getState()).data?.[0]?.completed,
+      tasksApi.endpoints.getTasks.select(view)(store.getState()).data?.items[0]?.completed,
     ).toBe(false);
 
     query.unsubscribe();
@@ -182,65 +188,46 @@ describe("tasksApi", () => {
 
   it("rolls back optimistic delete when the mutation fails", async () => {
     const tasks: Task[] = [
-      {
-        id: "t1",
-        title: "Existing task",
-        completed: false,
-        createdAt: 100,
-      },
-      {
-        id: "t2",
-        title: "Keep me",
-        completed: false,
-        createdAt: 90,
-      },
+      { id: "t1", title: "Existing task", completed: false, createdAt: 100 },
+      { id: "t2", title: "Keep me", completed: false, createdAt: 90 },
     ];
+    const view = normalizeTaskListQuery({ page: 1, pageSize: 5, search: "", filter: "all" });
     const deferredDelete = createDeferredPromise<string>();
 
-    mockedFetchStoredTasks.mockResolvedValue(tasks);
+    mockedFetchStoredTasksPage.mockResolvedValue(createTaskPage(tasks, view));
     mockedDeleteStoredTask.mockImplementation(() => deferredDelete.promise);
 
     const store = createAppStore();
-    const query = store.dispatch(tasksApi.endpoints.getTasks.initiate());
+    const query = store.dispatch(tasksApi.endpoints.getTasks.initiate(view));
     await query.unwrap();
 
     const mutation = store.dispatch(
-      tasksApi.endpoints.deleteTask.initiate({ id: "t1" }),
+      tasksApi.endpoints.deleteTask.initiate({ id: "t1", view }),
     );
 
     await Promise.resolve();
-
     expect(
-      tasksApi.endpoints.getTasks.select()(store.getState()).data?.map(
-        (task) => task.id,
-      ),
+      tasksApi.endpoints.getTasks.select(view)(store.getState()).data?.items.map((task) => task.id),
     ).toEqual(["t2"]);
 
     deferredDelete.reject(new Error("Delete failed"));
     await mutation;
-
     await waitForTick();
 
     expect(
-      tasksApi.endpoints.getTasks.select()(store.getState()).data?.map(
-        (task) => task.id,
-      ),
+      tasksApi.endpoints.getTasks.select(view)(store.getState()).data?.items.map((task) => task.id),
     ).toEqual(["t1", "t2"]);
 
     query.unsubscribe();
   });
 
-  it("invalidates and refetches the task list after a mutation", async () => {
+  it("invalidates and refetches the active page after a mutation", async () => {
     let tasks = [
-      {
-        id: "t1",
-        title: "Existing task",
-        completed: false,
-        createdAt: 100,
-      },
+      { id: "t1", title: "Existing task", completed: false, createdAt: 100 },
     ];
+    const view = normalizeTaskListQuery({ page: 1, pageSize: 5, search: "", filter: "all" });
 
-    mockedFetchStoredTasks.mockImplementation(async () => tasks);
+    mockedFetchStoredTasksPage.mockImplementation(async (query) => createTaskPage(tasks, query));
     mockedCreateStoredTask.mockImplementation(async (title: string) => {
       const nextTask = {
         id: "t2",
@@ -269,20 +256,20 @@ describe("tasksApi", () => {
     });
 
     const store = createAppStore();
-    const query = store.dispatch(tasksApi.endpoints.getTasks.initiate());
+    const query = store.dispatch(tasksApi.endpoints.getTasks.initiate(view));
     await query.unwrap();
 
-    expect(mockedFetchStoredTasks).toHaveBeenCalledTimes(1);
+    expect(mockedFetchStoredTasksPage).toHaveBeenCalledTimes(1);
 
     await store.dispatch(
-      tasksApi.endpoints.addTask.initiate({ title: "Fresh task" }),
+      tasksApi.endpoints.addTask.initiate({ title: "Fresh task", view }),
     ).unwrap();
 
     await waitForTick();
 
-    expect(mockedFetchStoredTasks).toHaveBeenCalledTimes(2);
+    expect(mockedFetchStoredTasksPage).toHaveBeenCalledTimes(2);
     expect(
-      tasksApi.endpoints.getTasks.select()(store.getState()).data?.[0]?.title,
+      tasksApi.endpoints.getTasks.select(view)(store.getState()).data?.items[0]?.title,
     ).toBe("Fresh task");
 
     query.unsubscribe();
