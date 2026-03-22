@@ -1,48 +1,80 @@
-import { lazy, Suspense, useCallback, useDeferredValue, useEffect } from "react";
+import {
+  Suspense,
+  lazy,
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+} from "react";
+import { useSearchParams } from "react-router-dom";
 import TaskForm from "./components/TaskForm";
-import TaskFilters from "./components/TaskFilters";
 import TaskList from "./components/TaskList";
+import TasksPagination from "./components/TasksPagination";
+import TasksQueryToolbar from "./components/TasksQueryToolbar";
 import Button from "../../shared/components/Button";
 import LoadingPanel from "../../shared/components/LoadingPanel";
 import RenderProfiler from "../../shared/components/RenderProfiler";
 import { normalizeApiError } from "../../shared/api/apiErrors";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import {
+  tasksApi,
   useAddTaskMutation,
   useClearCompletedMutation,
   useDeleteTaskMutation,
   useGetTasksQuery,
   useToggleTaskMutation,
 } from "./tasksApi";
-import { hydrateTasksFromQuery, setFilter } from "./tasksSlice";
+import { hydrateTasksFromQuery } from "./tasksSlice";
 import {
-  selectCanClearCompleted,
-  selectHasLoadedTasks,
   selectIsTasksMutating,
   selectLastMutation,
   selectLastSyncedAt,
   selectTaskErrors,
-  selectTaskFilter,
-  selectTaskStats,
-  selectVisibleTaskIds,
 } from "./tasksSelectors";
+import { normalizeTaskListQuery } from "./taskUtils";
+import type { TaskFilter, TaskListQuery } from "./types";
 
 const TasksInsightsPanel = lazy(() => import("./components/TasksInsightsPanel"));
+const DEFAULT_PAGE_SIZE = 5;
 
-function getEmptyStateCopy(filter: "all" | "active" | "completed") {
-  if (filter === "active") {
+function getSearchParamFilter(value: string | null): TaskFilter {
+  if (value === "active" || value === "completed") {
+    return value;
+  }
+
+  return "all";
+}
+
+function getQueryFromSearchParams(searchParams: URLSearchParams): TaskListQuery {
+  return normalizeTaskListQuery({
+    page: Number.parseInt(searchParams.get("page") ?? "1", 10),
+    pageSize: DEFAULT_PAGE_SIZE,
+    search: searchParams.get("search") ?? "",
+    filter: getSearchParamFilter(searchParams.get("filter")),
+  });
+}
+
+function getEmptyStateCopy(query: TaskListQuery) {
+  if (query.search) {
     return {
-      title: "No active tasks",
-      description:
-        "Everything is done right now. Add a new task or switch filters to review completed work.",
+      title: "No matching results",
+      description: `No tasks matched "${query.search}" for the current filter. Try a broader search or reset the query.`,
     };
   }
 
-  if (filter === "completed") {
+  if (query.filter === "active") {
+    return {
+      title: "No active tasks",
+      description:
+        "Everything is completed right now. Add another task or switch filters to inspect finished work.",
+    };
+  }
+
+  if (query.filter === "completed") {
     return {
       title: "No completed tasks",
       description:
-        "Completed work will appear here once tasks are checked off.",
+        "Completed items will appear here after tasks are checked off.",
     };
   }
 
@@ -55,54 +87,91 @@ function getEmptyStateCopy(filter: "all" | "active" | "completed") {
 
 export default function TasksPage() {
   const dispatch = useAppDispatch();
-  const filter = useAppSelector(selectTaskFilter);
-  const visibleTaskIds = useAppSelector(selectVisibleTaskIds);
-  const deferredTaskIds = useDeferredValue(visibleTaskIds);
-  const stats = useAppSelector(selectTaskStats);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const query = useMemo(() => getQueryFromSearchParams(searchParams), [searchParams]);
+  const deferredQuery = useDeferredValue(query);
+  const prefetchTasksPage = tasksApi.usePrefetch("getTasks");
   const isMutating = useAppSelector(selectIsTasksMutating);
-  const canClearCompleted = useAppSelector(selectCanClearCompleted);
   const taskErrors = useAppSelector(selectTaskErrors);
-  const hasLoaded = useAppSelector(selectHasLoadedTasks);
   const lastSyncedAt = useAppSelector(selectLastSyncedAt);
   const lastMutation = useAppSelector(selectLastMutation);
   const {
-    data: fetchedTasks,
+    data: taskPage,
     error: fetchError,
     isError: isFetchError,
     isFetching,
     isLoading,
     refetch,
-  } = useGetTasksQuery();
+  } = useGetTasksQuery(deferredQuery);
   const [runAddTask] = useAddTaskMutation();
   const [runToggleTask] = useToggleTaskMutation();
   const [runDeleteTask] = useDeleteTaskMutation();
   const [runClearCompleted] = useClearCompletedMutation();
 
   useEffect(() => {
-    if (fetchedTasks) {
-      dispatch(hydrateTasksFromQuery({ tasks: fetchedTasks }));
+    if (taskPage) {
+      dispatch(hydrateTasksFromQuery({ tasks: taskPage.items }));
     }
-  }, [dispatch, fetchedTasks]);
+  }, [dispatch, taskPage]);
+
+  useEffect(() => {
+    if (!taskPage) {
+      return;
+    }
+
+    if (taskPage.hasNextPage) {
+      prefetchTasksPage({ ...query, page: taskPage.page + 1 }, { force: false });
+    }
+
+    if (taskPage.hasPreviousPage) {
+      prefetchTasksPage({ ...query, page: taskPage.page - 1 }, { force: false });
+    }
+  }, [prefetchTasksPage, query, taskPage]);
+
+  const updateQueryParams = useCallback(
+    (updates: Partial<TaskListQuery>) => {
+      const nextQuery = normalizeTaskListQuery({
+        ...query,
+        ...updates,
+      });
+      const nextParams = new URLSearchParams();
+
+      if (nextQuery.page > 1) {
+        nextParams.set("page", String(nextQuery.page));
+      }
+
+      if (nextQuery.filter !== "all") {
+        nextParams.set("filter", nextQuery.filter);
+      }
+
+      if (nextQuery.search) {
+        nextParams.set("search", nextQuery.search);
+      }
+
+      setSearchParams(nextParams, { replace: true });
+    },
+    [query, setSearchParams],
+  );
 
   const onAdd = useCallback(
     (title: string) => {
-      void runAddTask({ title });
+      void runAddTask({ title, view: query });
     },
-    [runAddTask],
+    [query, runAddTask],
   );
 
   const onToggle = useCallback(
     (id: string) => {
-      void runToggleTask({ id });
+      void runToggleTask({ id, view: query });
     },
-    [runToggleTask],
+    [query, runToggleTask],
   );
 
   const onDelete = useCallback(
     (id: string) => {
-      void runDeleteTask({ id });
+      void runDeleteTask({ id, view: query });
     },
-    [runDeleteTask],
+    [query, runDeleteTask],
   );
 
   const onClearCompleted = useCallback(() => {
@@ -110,23 +179,43 @@ export default function TasksPage() {
   }, [runClearCompleted]);
 
   const onFilterChange = useCallback(
-    (nextFilter: typeof filter) => {
-      dispatch(setFilter({ filter: nextFilter }));
+    (nextFilter: TaskFilter) => {
+      updateQueryParams({ filter: nextFilter, page: 1 });
     },
-    [dispatch],
+    [updateQueryParams],
   );
 
-  const showInitialLoading = (isLoading || isFetching) && !hasLoaded;
-  const showRefreshingState = isFetching && hasLoaded;
-  const isListDeferred = deferredTaskIds !== visibleTaskIds;
-  const isInteractionLocked = isMutating || showInitialLoading;
+  const onSearchChange = useCallback(
+    (search: string) => {
+      updateQueryParams({ search, page: 1 });
+    },
+    [updateQueryParams],
+  );
+
+  const onPageChange = useCallback(
+    (page: number) => {
+      updateQueryParams({ page });
+    },
+    [updateQueryParams],
+  );
+
+  const onResetQuery = useCallback(() => {
+    setSearchParams(new URLSearchParams(), { replace: true });
+  }, [setSearchParams]);
+
+  const showInitialLoading = (isLoading || isFetching) && !taskPage;
+  const showRefreshingState = isFetching && Boolean(taskPage);
   const mutationError = taskErrors.mutate;
   const queryError = isFetchError
     ? normalizeApiError(fetchError, "Task request failed")
     : null;
   const error = mutationError ?? queryError;
-  const showBlockingQueryError = Boolean(queryError && !hasLoaded);
-  const emptyState = getEmptyStateCopy(filter);
+  const showBlockingQueryError = Boolean(queryError && !taskPage);
+  const emptyState = getEmptyStateCopy(query);
+  const isInteractionLocked = isMutating || showInitialLoading;
+  const stats = taskPage?.counts ?? { total: 0, active: 0, completed: 0 };
+  const tasks = taskPage?.items ?? [];
+  const canClearCompleted = stats.completed > 0;
 
   return (
     <div className="px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
@@ -144,8 +233,8 @@ export default function TasksPage() {
             Completed: <b>{stats.completed}</b>
           </p>
           <p className="mt-2 text-xs uppercase tracking-[0.2em] text-teal-700">
-            Day 9 architecture: RTK Query server-state flows, optimistic cache updates,
-            rollback safety, and production-style loading UX
+            Day 10 architecture: URL-driven query state, paginated RTK Query caches,
+            adjacent-page prefetching, and scalable list-screen UX
           </p>
         </div>
 
@@ -170,14 +259,28 @@ export default function TasksPage() {
       <main className="mt-8 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
         <TaskForm onAdd={onAdd} disabled={isInteractionLocked} />
 
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <TaskFilters
-            value={filter}
-            onChange={onFilterChange}
-            disabled={isInteractionLocked}
+        <div className="mt-6">
+          <TasksQueryToolbar
+            filter={query.filter}
+            search={query.search}
+            isBusy={isFetching}
+            onFilterChange={onFilterChange}
+            onSearchChange={onSearchChange}
+            onReset={onResetQuery}
           />
+        </div>
 
-          {hasLoaded && (
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="text-sm text-slate-600">
+            Query: <b>{query.filter}</b>
+            {query.search ? (
+              <>
+                {" "}| Search: <b>{query.search}</b>
+              </>
+            ) : null}
+          </div>
+
+          {taskPage && (
             <button
               type="button"
               onClick={() => void refetch()}
@@ -213,17 +316,11 @@ export default function TasksPage() {
         )}
 
         <div className="mt-6 space-y-4">
-          {isListDeferred && !showInitialLoading && (
-            <div className="rounded-xl border border-teal-100 bg-teal-50 px-4 py-3 text-sm text-teal-800">
-              Updating the filtered task view...
-            </div>
-          )}
-
           {showInitialLoading ? (
             <LoadingPanel
               compact
               title="Loading tasks..."
-              description="Restoring the task workspace and synchronizing the first view."
+              description="Loading the first page of the workspace and restoring the active query."
             />
           ) : showBlockingQueryError ? (
             <div className="rounded-3xl border border-red-200 bg-red-50 px-6 py-10 text-center">
@@ -231,7 +328,7 @@ export default function TasksPage() {
                 Initial sync failed
               </p>
               <h3 className="mt-3 text-xl font-semibold text-slate-900">
-                We couldn't load the workspace
+                We couldn't load this task query
               </h3>
               <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-600">
                 {queryError}
@@ -243,16 +340,29 @@ export default function TasksPage() {
               </div>
             </div>
           ) : (
-            <RenderProfiler id="TasksList">
-              <TaskList
-                taskIds={deferredTaskIds}
-                onToggle={onToggle}
-                onDelete={onDelete}
-                disabled={isMutating}
-                emptyTitle={emptyState.title}
-                emptyDescription={emptyState.description}
-              />
-            </RenderProfiler>
+            <>
+              <RenderProfiler id="TasksList">
+                <TaskList
+                  tasks={tasks}
+                  onToggle={onToggle}
+                  onDelete={onDelete}
+                  disabled={isMutating}
+                  emptyTitle={emptyState.title}
+                  emptyDescription={emptyState.description}
+                />
+              </RenderProfiler>
+
+              {taskPage && (
+                <TasksPagination
+                  page={taskPage.page}
+                  totalPages={taskPage.totalPages}
+                  totalItems={taskPage.totalItems}
+                  pageSize={taskPage.pageSize}
+                  isFetching={isFetching}
+                  onPageChange={onPageChange}
+                />
+              )}
+            </>
           )}
         </div>
       </main>
