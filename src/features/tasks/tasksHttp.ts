@@ -4,15 +4,17 @@ import {
   toClearCompletedResponseDto,
   toDeleteTaskResponseDto,
   toTaskDto,
+  toTaskPageDto,
   type CreateTaskRequestDto,
 } from "./taskDtos";
 import {
   clearStoredCompletedTasks,
   createStoredTask,
   deleteStoredTask,
-  fetchStoredTasks,
+  fetchStoredTasksPage,
   toggleStoredTask,
 } from "./storage";
+import type { TaskFilter } from "./types";
 
 function jsonResponse(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -64,6 +66,19 @@ function getTaskIdFromDeletePath(pathname: string) {
   return match?.[1] ?? null;
 }
 
+function getTaskListQuery(searchParams: URLSearchParams) {
+  const rawFilter = searchParams.get("filter");
+  const filter: TaskFilter =
+    rawFilter === "active" || rawFilter === "completed" ? rawFilter : "all";
+
+  return {
+    page: Number.parseInt(searchParams.get("page") ?? "1", 10) || 1,
+    pageSize: Number.parseInt(searchParams.get("pageSize") ?? "5", 10) || 5,
+    search: searchParams.get("search") ?? "",
+    filter,
+  };
+}
+
 const tasksCollectionPath = `${apiConfig.baseUrl}${tasksApiConfig.resourcePath}`;
 const clearCompletedPath = `${tasksCollectionPath}/clear-completed`;
 
@@ -74,8 +89,8 @@ export async function taskApiFetch(input: RequestInfo | URL, init?: RequestInit)
 
   try {
     if (pathname === tasksCollectionPath && method === "GET") {
-      const tasks = await fetchStoredTasks();
-      return jsonResponse(tasks.map(toTaskDto));
+      const taskPage = await fetchStoredTasksPage(getTaskListQuery(requestUrl.searchParams));
+      return jsonResponse(toTaskPageDto(taskPage));
     }
 
     if (pathname === tasksCollectionPath && method === "POST") {
