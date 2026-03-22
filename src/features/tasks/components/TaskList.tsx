@@ -1,7 +1,8 @@
 import TaskItem from "./TaskItem";
+import type { Task } from "../types";
 
 type Props = {
-  taskIds: string[];
+  tasks: Task[];
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   disabled?: boolean;
@@ -10,14 +11,14 @@ type Props = {
 };
 
 export default function TaskList({
-  taskIds,
+  tasks,
   onToggle,
   onDelete,
   disabled = false,
   emptyTitle = "No tasks yet",
   emptyDescription = "Add your first task to start building this workspace.",
 }: Props) {
-  if (taskIds.length === 0) {
+  if (tasks.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-10 text-center">
         <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
@@ -33,10 +34,10 @@ export default function TaskList({
 
   return (
     <ul className="space-y-3" aria-label="Task list">
-      {taskIds.map((taskId) => (
+      {tasks.map((task) => (
         <TaskItem
-          key={taskId}
-          taskId={taskId}
+          key={task.id}
+          task={task}
           onToggle={onToggle}
           onDelete={onDelete}
           disabled={disabled}

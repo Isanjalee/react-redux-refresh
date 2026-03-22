@@ -1,36 +1,30 @@
 import React from "react";
 import Button from "../../../shared/components/Button";
-import { useAppSelector } from "../../../app/hooks";
-import { selectTaskById } from "../tasksSelectors";
+import type { Task } from "../types";
 
 type Props = {
-  taskId: string;
+  task: Task;
   onToggle: (id: string) => void;
   onDelete: (id: string) => void;
   disabled?: boolean;
 };
 
 const TaskItem = React.memo(function TaskItem({
-  taskId,
+  task,
   onToggle,
   onDelete,
   disabled = false,
 }: Props) {
-  const task = useAppSelector((state) => selectTaskById(state, taskId));
-
-  if (!task) {
-    return null;
-  }
-
   return (
-    <li className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 hover:bg-gray-100 transition">
+    <li className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 transition hover:bg-gray-100">
       <label className="flex items-center gap-3">
         <input
           type="checkbox"
           checked={task.completed}
           disabled={disabled}
-          onChange={() => onToggle(taskId)}
+          onChange={() => onToggle(task.id)}
           className="h-4 w-4"
+          aria-label={task.title}
         />
 
         <span
@@ -44,7 +38,7 @@ const TaskItem = React.memo(function TaskItem({
 
       <Button
         variant="danger"
-        onClick={() => onDelete(taskId)}
+        onClick={() => onDelete(task.id)}
         type="button"
         disabled={disabled}
       >
