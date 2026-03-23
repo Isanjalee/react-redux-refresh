@@ -44,6 +44,8 @@ This repository is used to practice:
 - Rollback-aware mutation flows
 - Environment-based API configuration
 - API-focused error handling
+- Runtime schema validation
+- Form and API contract safety
 
 ## Project Structure
 
@@ -197,6 +199,15 @@ src/
 - Reusable search and pagination controls
 - Scalable list-screen architecture
 
+### Day 11
+
+- Runtime schema validation
+- Safer form input parsing
+- Query-param contract validation
+- API request and response validation
+- Centralized schema-driven error handling
+- Stronger boundaries between transport data and UI state
+
 ## Current Status
 
 - Day 1 complete
@@ -209,33 +220,33 @@ src/
 - Day 8 complete
 - Day 9 complete
 - Day 10 complete
+- Day 11 complete
 
-## Day 10 Goal
+## Day 11 Goal
 
-Upgrade the task page into a more production-shaped server-state screen by learning:
+Harden the task app with runtime-safe frontend contracts by learning:
 
-- URL-driven state
-- Search and filter query params
-- Pagination through RTK Query query args
-- Paginated DTO mapping
-- Adjacent-page prefetching
-- Query-aware loading, refresh, and empty states
-- Reusable toolbar and pagination UI boundaries
+- schema validation for API data
+- schema validation for form input
+- query-param parsing through typed contracts
+- safe request and response transforms
+- centralized validation error handling
+- reducing trust in raw transport data
 
-This day is focused on building the kind of scalable list-screen architecture large React applications use when filters, search, and pagination must stay shareable and cache-aware.
+This day is focused on moving from compile-time-only confidence toward runtime-safe frontend architecture, where forms, query params, and API payloads are validated before they affect UI state.
 
-## Day 10 Commit Plan
+## Day 11 Commit Plan
 
-1. Add the Day 10 roadmap and goals to the docs
-2. Sync task query state with URL params
-3. Support paginated RTK Query args
-4. Add paginated task DTO mapping
-5. Add task search and filter toolbar
-6. Add task pagination controls
-7. Prefetch adjacent task pages
-8. Improve query-driven loading and empty states
-9. Add test coverage for paginated task flows
-10. Update the interview guide and PDF
+1. Add the Day 11 roadmap and goals to the docs
+2. Add shared task schemas for domain and transport data
+3. Validate query params through schema parsing
+4. Validate task form submissions before mutation triggers
+5. Validate API responses and normalize schema failures
+6. Refactor DTO and HTTP helpers around parsed contracts
+7. Improve validation-aware loading and error copy
+8. Add tests for invalid query, form, and response flows
+9. Extend the interview guide with schema-validation concepts
+10. Regenerate the interview guide PDF
 
 ## Next Improvements
 
@@ -257,6 +268,10 @@ npm run build
 ## Purpose
 
 This project is part of a structured React refresh journey aimed at strengthening fundamentals and practicing the kinds of routing, state, testing, caching, pagination, and performance decisions used in production frontend applications.
+
+
+
+
 
 
 
