@@ -1,8 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import {
-  resolveApiBaseUrl,
-  tasksApiConfig,
-} from "../../shared/api/apiConfig";
+import { resolveApiBaseUrl, tasksApiConfig } from "../../shared/api/apiConfig";
+import { toApiErrorPayloadFromUnknown } from "../../shared/api/apiErrors";
 import { makeId, matchesTaskQuery, normalizeTaskListQuery } from "./taskUtils";
 import {
   fromClearCompletedResponseDto,
@@ -17,12 +15,15 @@ import {
   type TaskPageDto,
 } from "./taskDtos";
 import { taskApiFetch } from "./tasksHttp";
+import { parseTaskListQuery, safeParseTaskTitle } from "./taskSchemas";
 import type { Task, TaskListQuery, TaskPage } from "./types";
 
 function createOptimisticTask(title: string): Task {
+  const parsedTitle = safeParseTaskTitle(title);
+
   return {
     id: `optimistic-${makeId()}`,
-    title: title.trim(),
+    title: parsedTitle.success ? parsedTitle.data : title.trim(),
     completed: false,
     createdAt: Date.now(),
   };
@@ -130,10 +131,14 @@ export const tasksApi = createApi({
   tagTypes: [tasksApiConfig.tagType],
   endpoints: (builder) => ({
     getTasks: builder.query<TaskPage, TaskListQuery>({
-      query: (query) => ({
-        url: tasksApiConfig.resourcePath,
-        params: toTaskPageRequestDto(normalizeTaskListQuery(query)),
-      }),
+      query: (query) => {
+        const safeQuery = parseTaskListQuery(normalizeTaskListQuery(query));
+
+        return {
+          url: tasksApiConfig.resourcePath,
+          params: toTaskPageRequestDto(safeQuery),
+        };
+      },
       transformResponse: (response: TaskPageDto) => toTaskPage(response),
       providesTags: (result) =>
         result
@@ -147,24 +152,45 @@ export const tasksApi = createApi({
           : [{ type: tasksApiConfig.tagType, id: "LIST" }],
     }),
     addTask: builder.mutation<Task, AddTaskArg>({
-      query: ({ title }) => ({
-        url: tasksApiConfig.resourcePath,
-        method: "POST",
-        body: toCreateTaskRequestDto(title),
-      }),
-      transformResponse: (response: TaskDto) => toTask(response),
+      async queryFn({ title }, _api, _extraOptions, fetchWithBQ) {
+        try {
+          const response = await fetchWithBQ({
+            url: tasksApiConfig.resourcePath,
+            method: "POST",
+            body: toCreateTaskRequestDto(title),
+          });
+
+          if (response.error) {
+            return { error: response.error };
+          }
+
+          return { data: toTask(response.data as TaskDto) };
+        } catch (error) {
+          return {
+            error: {
+              status: 400,
+              data: toApiErrorPayloadFromUnknown(error, "Task request failed"),
+            },
+          };
+        }
+      },
       async onQueryStarted({ title, view }, { dispatch, queryFulfilled }) {
+        const safeView = parseTaskListQuery(view);
         const optimisticTask = createOptimisticTask(title);
+        if (!optimisticTask.title) {
+          return;
+        }
+
         const patchResult = dispatch(
-          tasksApi.util.updateQueryData("getTasks", view, (draft) => {
-            patchPageForAdd(draft, optimisticTask, view);
+          tasksApi.util.updateQueryData("getTasks", safeView, (draft) => {
+            patchPageForAdd(draft, optimisticTask, safeView);
           }),
         );
 
         try {
           const { data } = await queryFulfilled;
           dispatch(
-            tasksApi.util.updateQueryData("getTasks", view, (draft) => {
+            tasksApi.util.updateQueryData("getTasks", safeView, (draft) => {
               const optimisticIndex = draft.items.findIndex(
                 (task) => task.id === optimisticTask.id,
               );
@@ -174,7 +200,7 @@ export const tasksApi = createApi({
                 return;
               }
 
-              if (view.page === 1 && matchesTaskQuery(data, view)) {
+              if (safeView.page === 1 && matchesTaskQuery(data, safeView)) {
                 draft.items.unshift(data);
                 if (draft.items.length > draft.pageSize) {
                   draft.items.pop();
@@ -195,16 +221,17 @@ export const tasksApi = createApi({
       }),
       transformResponse: (response: TaskDto) => toTask(response),
       async onQueryStarted({ id, view }, { dispatch, queryFulfilled }) {
+        const safeView = parseTaskListQuery(view);
         const patchResult = dispatch(
-          tasksApi.util.updateQueryData("getTasks", view, (draft) => {
-            patchPageForToggle(draft, id, view);
+          tasksApi.util.updateQueryData("getTasks", safeView, (draft) => {
+            patchPageForToggle(draft, id, safeView);
           }),
         );
 
         try {
           const { data } = await queryFulfilled;
           dispatch(
-            tasksApi.util.updateQueryData("getTasks", view, (draft) => {
+            tasksApi.util.updateQueryData("getTasks", safeView, (draft) => {
               const index = draft.items.findIndex((task) => task.id === id);
               if (index >= 0) {
                 draft.items[index] = data;
@@ -228,8 +255,9 @@ export const tasksApi = createApi({
       transformResponse: (response: DeleteTaskResponseDto) =>
         fromDeleteTaskResponseDto(response),
       async onQueryStarted({ id, view }, { dispatch, queryFulfilled }) {
+        const safeView = parseTaskListQuery(view);
         const patchResult = dispatch(
-          tasksApi.util.updateQueryData("getTasks", view, (draft) => {
+          tasksApi.util.updateQueryData("getTasks", safeView, (draft) => {
             patchPageForDelete(draft, id);
           }),
         );
