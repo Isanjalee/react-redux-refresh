@@ -1,5 +1,8 @@
 import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import type { SerializedError } from "@reduxjs/toolkit";
+import { ZodError } from "zod";
+
+export const SCHEMA_VALIDATION_ERROR_CODE = "SCHEMA_VALIDATION_ERROR";
 
 export type ApiErrorPayload = {
   message: string;
@@ -11,6 +14,36 @@ export function toApiErrorPayload(
   code = "TASKS_API_ERROR",
 ): ApiErrorPayload {
   return { message, code };
+}
+
+export function formatSchemaError(
+  error: ZodError,
+  fallback = "Validation failed",
+) {
+  const firstIssue = error.issues[0];
+  return firstIssue?.message ?? fallback;
+}
+
+export function toApiErrorPayloadFromUnknown(
+  error: unknown,
+  fallback = "Task request failed",
+) {
+  if (error instanceof ZodError) {
+    return toApiErrorPayload(
+      formatSchemaError(error, fallback),
+      SCHEMA_VALIDATION_ERROR_CODE,
+    );
+  }
+
+  if (error instanceof Error) {
+    return toApiErrorPayload(error.message);
+  }
+
+  if (typeof error === "string") {
+    return toApiErrorPayload(error);
+  }
+
+  return toApiErrorPayload(fallback);
 }
 
 function isApiErrorPayload(value: unknown): value is ApiErrorPayload {
@@ -36,6 +69,10 @@ export function normalizeApiError(
 ) {
   if (typeof error === "string") {
     return error;
+  }
+
+  if (error instanceof ZodError) {
+    return formatSchemaError(error, fallback);
   }
 
   if (isApiErrorPayload(error)) {
