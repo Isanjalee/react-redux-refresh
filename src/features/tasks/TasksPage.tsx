@@ -31,27 +31,61 @@ import {
   selectLastSyncedAt,
   selectTaskErrors,
 } from "./tasksSelectors";
+import {
+  DEFAULT_TASK_PAGE_SIZE,
+  parseTaskFilter,
+  parseTaskListQuery,
+} from "./taskSchemas";
 import { normalizeTaskListQuery } from "./taskUtils";
-import type { TaskFilter, TaskListQuery } from "./types";
+import type { TaskListQuery } from "./types";
 
 const TasksInsightsPanel = lazy(() => import("./components/TasksInsightsPanel"));
-const DEFAULT_PAGE_SIZE = 5;
 
-function getSearchParamFilter(value: string | null): TaskFilter {
-  if (value === "active" || value === "completed") {
-    return value;
+type QueryState = {
+  query: TaskListQuery;
+  hadCorrections: boolean;
+};
+
+function buildSearchParams(query: TaskListQuery) {
+  const nextParams = new URLSearchParams();
+
+  if (query.page > 1) {
+    nextParams.set("page", String(query.page));
   }
 
-  return "all";
+  if (query.filter !== "all") {
+    nextParams.set("filter", query.filter);
+  }
+
+  if (query.search) {
+    nextParams.set("search", query.search);
+  }
+
+  return nextParams;
 }
 
-function getQueryFromSearchParams(searchParams: URLSearchParams): TaskListQuery {
-  return normalizeTaskListQuery({
-    page: Number.parseInt(searchParams.get("page") ?? "1", 10),
-    pageSize: DEFAULT_PAGE_SIZE,
-    search: searchParams.get("search") ?? "",
-    filter: getSearchParamFilter(searchParams.get("filter")),
-  });
+function getQueryStateFromSearchParams(searchParams: URLSearchParams): QueryState {
+  const rawPage = searchParams.get("page");
+  const rawPageSize = searchParams.get("pageSize");
+  const rawSearch = searchParams.get("search");
+  const rawFilter = searchParams.get("filter");
+
+  const query = normalizeTaskListQuery(
+    parseTaskListQuery({
+      page: rawPage ?? undefined,
+      pageSize: rawPageSize ?? DEFAULT_TASK_PAGE_SIZE,
+      search: rawSearch ?? "",
+      filter: parseTaskFilter(rawFilter),
+    }),
+  );
+
+  const hadCorrections =
+    (rawPage !== null && rawPage !== String(query.page)) ||
+    (rawPageSize !== null && rawPageSize !== String(query.pageSize)) ||
+    (rawSearch !== null && rawSearch !== query.search) ||
+    (rawFilter !== null && rawFilter !== query.filter);
+
+  return { query, hadCorrections };
 }
 
 function getEmptyStateCopy(query: TaskListQuery) {
@@ -88,7 +122,10 @@ function getEmptyStateCopy(query: TaskListQuery) {
 export default function TasksPage() {
   const dispatch = useAppDispatch();
   const [searchParams, setSearchParams] = useSearchParams();
-  const query = useMemo(() => getQueryFromSearchParams(searchParams), [searchParams]);
+  const { query, hadCorrections } = useMemo(
+    () => getQueryStateFromSearchParams(searchParams),
+    [searchParams],
+  );
   const deferredQuery = useDeferredValue(query);
   const prefetchTasksPage = tasksApi.usePrefetch("getTasks");
   const isMutating = useAppSelector(selectIsTasksMutating);
@@ -107,6 +144,12 @@ export default function TasksPage() {
   const [runToggleTask] = useToggleTaskMutation();
   const [runDeleteTask] = useDeleteTaskMutation();
   const [runClearCompleted] = useClearCompletedMutation();
+
+  useEffect(() => {
+    if (hadCorrections) {
+      setSearchParams(buildSearchParams(query), { replace: true });
+    }
+  }, [hadCorrections, query, setSearchParams]);
 
   useEffect(() => {
     if (taskPage) {
@@ -130,25 +173,14 @@ export default function TasksPage() {
 
   const updateQueryParams = useCallback(
     (updates: Partial<TaskListQuery>) => {
-      const nextQuery = normalizeTaskListQuery({
-        ...query,
-        ...updates,
-      });
-      const nextParams = new URLSearchParams();
+      const nextQuery = parseTaskListQuery(
+        normalizeTaskListQuery({
+          ...query,
+          ...updates,
+        }),
+      );
 
-      if (nextQuery.page > 1) {
-        nextParams.set("page", String(nextQuery.page));
-      }
-
-      if (nextQuery.filter !== "all") {
-        nextParams.set("filter", nextQuery.filter);
-      }
-
-      if (nextQuery.search) {
-        nextParams.set("search", nextQuery.search);
-      }
-
-      setSearchParams(nextParams, { replace: true });
+      setSearchParams(buildSearchParams(nextQuery), { replace: true });
     },
     [query, setSearchParams],
   );
@@ -179,7 +211,7 @@ export default function TasksPage() {
   }, [runClearCompleted]);
 
   const onFilterChange = useCallback(
-    (nextFilter: TaskFilter) => {
+    (nextFilter: TaskListQuery["filter"]) => {
       updateQueryParams({ filter: nextFilter, page: 1 });
     },
     [updateQueryParams],
@@ -233,8 +265,8 @@ export default function TasksPage() {
             Completed: <b>{stats.completed}</b>
           </p>
           <p className="mt-2 text-xs uppercase tracking-[0.2em] text-teal-700">
-            Day 10 architecture: URL-driven query state, paginated RTK Query caches,
-            adjacent-page prefetching, and scalable list-screen UX
+            Day 11 architecture: runtime-safe query params, validated task contracts,
+            and schema-checked RTK Query boundaries
           </p>
         </div>
 
@@ -242,7 +274,7 @@ export default function TasksPage() {
           {showRefreshingState && (
             <div className="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-800">
               <span className="h-2 w-2 animate-pulse rounded-full bg-teal-500" />
-              Syncing latest changes
+              Validating latest changes
             </div>
           )}
 
@@ -269,6 +301,12 @@ export default function TasksPage() {
             onReset={onResetQuery}
           />
         </div>
+
+        {hadCorrections && (
+          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
+            Some invalid query parameters were reset to safe defaults for this view.
+          </div>
+        )}
 
         <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-sm text-slate-600">
@@ -319,8 +357,8 @@ export default function TasksPage() {
           {showInitialLoading ? (
             <LoadingPanel
               compact
-              title="Loading tasks..."
-              description="Loading the first page of the workspace and restoring the active query."
+              title="Loading validated tasks..."
+              description="Loading the first page of the workspace and validating the active query contract."
             />
           ) : showBlockingQueryError ? (
             <div className="rounded-3xl border border-red-200 bg-red-50 px-6 py-10 text-center">
@@ -328,7 +366,7 @@ export default function TasksPage() {
                 Initial sync failed
               </p>
               <h3 className="mt-3 text-xl font-semibold text-slate-900">
-                We couldn't load this task query
+                We couldn't load this validated task query
               </h3>
               <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-slate-600">
                 {queryError}
