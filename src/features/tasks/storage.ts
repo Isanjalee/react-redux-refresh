@@ -1,4 +1,17 @@
-import { makeId, filterTasks, getTaskCounts, normalizeTaskListQuery, searchTasks } from "./taskUtils";
+import {
+  filterTasks,
+  getTaskCounts,
+  makeId,
+  normalizeTaskListQuery,
+  searchTasks,
+} from "./taskUtils";
+import {
+  parseStoredTasks,
+  parseTask,
+  parseTaskListQuery,
+  parseTaskPage,
+  parseTaskTitle,
+} from "./taskSchemas";
 import type { Task, TaskListQuery, TaskPage } from "./types";
 
 const STORAGE_KEY = "rr_refresh_tasks_v4";
@@ -10,37 +23,24 @@ function delay(ms: number) {
   });
 }
 
-function isTask(value: unknown): value is Task {
-  return (
-    !!value &&
-    typeof value === "object" &&
-    typeof (value as Task).id === "string" &&
-    typeof (value as Task).title === "string" &&
-    typeof (value as Task).completed === "boolean" &&
-    typeof (value as Task).createdAt === "number"
-  );
-}
-
 function readTasks(): Task[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
 
     const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-
-    return parsed.filter(isTask);
+    return parseStoredTasks(parsed);
   } catch {
     return [];
   }
 }
 
 function writeTasks(tasks: Task[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks.map(parseTask)));
 }
 
 function paginateTasks(tasks: Task[], query: TaskListQuery): TaskPage {
-  const normalizedQuery = normalizeTaskListQuery(query);
+  const normalizedQuery = normalizeTaskListQuery(parseTaskListQuery(query));
   const filteredTasks = searchTasks(
     filterTasks(tasks, normalizedQuery.filter),
     normalizedQuery.search,
@@ -51,7 +51,7 @@ function paginateTasks(tasks: Task[], query: TaskListQuery): TaskPage {
   const start = (page - 1) * normalizedQuery.pageSize;
   const items = filteredTasks.slice(start, start + normalizedQuery.pageSize);
 
-  return {
+  return parseTaskPage({
     items,
     page,
     pageSize: normalizedQuery.pageSize,
@@ -62,30 +62,25 @@ function paginateTasks(tasks: Task[], query: TaskListQuery): TaskPage {
     filter: normalizedQuery.filter,
     search: normalizedQuery.search,
     counts: getTaskCounts(tasks),
-  };
+  });
 }
 
 export async function fetchStoredTasksPage(
   query: Partial<TaskListQuery> = {},
 ): Promise<TaskPage> {
   await delay(STORAGE_DELAY_MS);
-  return paginateTasks(readTasks(), normalizeTaskListQuery(query));
+  return paginateTasks(readTasks(), parseTaskListQuery(normalizeTaskListQuery(query)));
 }
 
 export async function createStoredTask(title: string): Promise<Task> {
   await delay(STORAGE_DELAY_MS);
 
-  const trimmed = title.trim();
-  if (!trimmed) {
-    throw new Error("Task title cannot be empty");
-  }
-
-  const nextTask = {
+  const nextTask = parseTask({
     id: makeId(),
-    title: trimmed,
+    title: parseTaskTitle(title),
     completed: false,
     createdAt: Date.now(),
-  };
+  });
 
   const nextTasks = [nextTask, ...readTasks()];
 
@@ -100,7 +95,7 @@ export async function toggleStoredTask(id: string): Promise<Task> {
   const nextTasks = readTasks().map((task) => {
     if (task.id !== id) return task;
 
-    updatedTask = { ...task, completed: !task.completed };
+    updatedTask = parseTask({ ...task, completed: !task.completed });
     return updatedTask;
   });
 
