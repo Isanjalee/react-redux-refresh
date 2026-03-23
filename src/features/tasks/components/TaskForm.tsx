@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Button from "../../../shared/components/Button";
+import { formatSchemaError } from "../../../shared/api/apiErrors";
+import { safeParseTaskTitle } from "../taskSchemas";
 
 type Props = {
   onAdd: (title: string) => void;
@@ -10,15 +12,21 @@ export default function TaskForm({ onAdd, disabled = false }: Props) {
   const [title, setTitle] = useState("");
   const [touched, setTouched] = useState(false);
 
-  const trimmed = title.trim();
-  const showError = touched && trimmed.length === 0;
+  const parsedTitle = useMemo(() => safeParseTaskTitle(title), [title]);
+  const validationMessage =
+    touched && !parsedTitle.success
+      ? formatSchemaError(parsedTitle.error, "Task title is invalid")
+      : null;
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setTouched(true);
-    if (!trimmed) return;
 
-    onAdd(trimmed);
+    if (!parsedTitle.success) {
+      return;
+    }
+
+    onAdd(parsedTitle.data);
     setTitle("");
     setTouched(false);
   }
@@ -32,17 +40,16 @@ export default function TaskForm({ onAdd, disabled = false }: Props) {
           onBlur={() => setTouched(true)}
           disabled={disabled}
           placeholder="Add a task..."
+          aria-invalid={Boolean(validationMessage)}
           className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition ${
-            showError
+            validationMessage
               ? "border-red-400 focus:border-red-500"
               : "border-gray-300 focus:border-black"
           }`}
         />
 
-        {showError && (
-          <p className="mt-2 text-xs text-red-600">
-            Task title cannot be empty
-          </p>
+        {validationMessage && (
+          <p className="mt-2 text-xs text-red-600">{validationMessage}</p>
         )}
       </div>
 
