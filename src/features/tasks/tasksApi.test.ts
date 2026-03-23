@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { createAppStore } from "../../app/store";
-import { normalizeTaskListQuery, filterTasks, searchTasks, getTaskCounts } from "./taskUtils";
+import { SCHEMA_VALIDATION_ERROR_CODE } from "../../shared/api/apiErrors";
+import { filterTasks, getTaskCounts, normalizeTaskListQuery, searchTasks } from "./taskUtils";
 import { tasksApi } from "./tasksApi";
 import {
   clearStoredCompletedTasks,
@@ -90,6 +91,36 @@ describe("tasksApi", () => {
     request.unsubscribe();
   });
 
+  it("sanitizes invalid query args before fetching storage", async () => {
+    const unsafeQuery = {
+      page: 0,
+      pageSize: 5,
+      search: "  Mock  ",
+      filter: "invalid",
+    } as unknown as TaskListQuery;
+    const safeQuery = normalizeTaskListQuery({
+      page: 1,
+      pageSize: 5,
+      search: "Mock",
+      filter: "all",
+    });
+
+    mockedFetchStoredTasksPage.mockResolvedValue(
+      createTaskPage(
+        [{ id: "t1", title: "Mock the API layer", completed: false, createdAt: 100 }],
+        safeQuery,
+      ),
+    );
+
+    const store = createAppStore();
+    const request = store.dispatch(tasksApi.endpoints.getTasks.initiate(unsafeQuery));
+    await request.unwrap();
+
+    expect(mockedFetchStoredTasksPage).toHaveBeenCalledWith(safeQuery);
+
+    request.unsubscribe();
+  });
+
   it("normalizes api errors for rejected mutations", async () => {
     mockedCreateStoredTask.mockRejectedValue(
       new Error("Task title cannot be empty"),
@@ -112,7 +143,42 @@ describe("tasksApi", () => {
       status: 400,
       data: {
         message: "Task title cannot be empty",
-        code: "TASKS_API_ERROR",
+        code: SCHEMA_VALIDATION_ERROR_CODE,
+      },
+    });
+  });
+
+  it("returns schema validation errors when the task page response is invalid", async () => {
+    mockedFetchStoredTasksPage.mockResolvedValue({
+      items: [{ id: "t1", title: "", completed: false, createdAt: 100 }],
+      page: 1,
+      pageSize: 5,
+      totalItems: 1,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPreviousPage: false,
+      filter: "all",
+      search: "",
+      counts: { total: 1, active: 1, completed: 0 },
+    } as unknown as TaskPage);
+
+    const store = createAppStore();
+    const result = await store.dispatch(
+      tasksApi.endpoints.getTasks.initiate(
+        normalizeTaskListQuery({ page: 1, pageSize: 5, search: "", filter: "all" }),
+      ),
+    );
+
+    expect("error" in result).toBe(true);
+    if (!("error" in result)) {
+      throw new Error("Expected a rejected RTK Query action");
+    }
+
+    expect(result.error).toEqual({
+      status: 400,
+      data: {
+        message: "Task title cannot be empty",
+        code: SCHEMA_VALIDATION_ERROR_CODE,
       },
     });
   });

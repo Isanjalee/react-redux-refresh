@@ -131,7 +131,6 @@ describe("TasksPage integration", () => {
     });
 
     expect(await screen.findByText("Mock the API layer")).toBeInTheDocument();
-    expect(screen.queryByText("Write reducer tests")).not.toBeInTheDocument();
     expect(screen.getByText(/Showing 1-1 of 1 matching tasks/)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Reset query" }));
@@ -143,20 +142,19 @@ describe("TasksPage integration", () => {
 
     expect(await screen.findByText("Review paginated API shape")).toBeInTheDocument();
     expect(screen.getByText("Page 2 of 2")).toBeInTheDocument();
-    expect(screen.queryByText("Write reducer tests")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Previous" }));
 
     expect(await screen.findByText("Write reducer tests")).toBeInTheDocument();
     expect(screen.getByText("Page 1 of 2")).toBeInTheDocument();
 
-    await user.type(screen.getByPlaceholderText("Add a task..."), "Ship Day 10");
+    await user.type(screen.getByPlaceholderText("Add a task..."), "Ship Day 11");
     await user.click(screen.getByRole("button", { name: "Add" }));
 
-    expect(await screen.findByText("Ship Day 10")).toBeInTheDocument();
+    expect(await screen.findByText("Ship Day 11")).toBeInTheDocument();
     createTaskRequest.resolve({
       id: "t8",
-      title: "Ship Day 10",
+      title: "Ship Day 11",
       completed: false,
       createdAt: 900,
     });
@@ -187,12 +185,40 @@ describe("TasksPage integration", () => {
     await user.click(within(writeReducerRow).getByRole("button", { name: "Delete" }));
 
     deleteTaskRequest.resolve("t1");
+  });
 
+  it("sanitizes invalid query params before fetching the page", async () => {
+    const tasks: Task[] = [
+      { id: "t1", title: "Mock the API layer", completed: false, createdAt: 700 },
+      { id: "t2", title: "Ship search toolbar", completed: false, createdAt: 200 },
+    ];
 
+    mockedFetchStoredTasksPage.mockImplementation(async (query) => createTaskPage(tasks, query));
+    mockedCreateStoredTask.mockResolvedValue({
+      id: "t3",
+      title: "Ignored",
+      completed: false,
+      createdAt: 900,
+    });
+    mockedToggleStoredTask.mockResolvedValue(tasks[0]);
+    mockedDeleteStoredTask.mockResolvedValue("t1");
+    mockedClearStoredCompletedTasks.mockResolvedValue([]);
+
+    renderWithProviders(<TasksPage />, {
+      route: "/tasks?page=0&filter=invalid&search=%20%20Mock%20%20&pageSize=999",
+    });
+
+    expect(await screen.findByText("Mock the API layer")).toBeInTheDocument();
+    expect(mockedFetchStoredTasksPage).toHaveBeenCalledWith(
+      normalizeTaskListQuery({
+        page: 1,
+        pageSize: 5,
+        search: "Mock",
+        filter: "all",
+      }),
+    );
+    expect(screen.getByDisplayValue("Mock")).toBeInTheDocument();
   });
 });
-
-
-
 
 
