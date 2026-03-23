@@ -1,11 +1,15 @@
 import { apiConfig, tasksApiConfig } from "../../shared/api/apiConfig";
-import { toApiErrorPayload } from "../../shared/api/apiErrors";
 import {
+  toApiErrorPayload,
+  toApiErrorPayloadFromUnknown,
+} from "../../shared/api/apiErrors";
+import { parseTaskListQuery } from "./taskSchemas";
+import {
+  parseCreateTaskRequestDto,
   toClearCompletedResponseDto,
   toDeleteTaskResponseDto,
   toTaskDto,
   toTaskPageDto,
-  type CreateTaskRequestDto,
 } from "./taskDtos";
 import {
   clearStoredCompletedTasks,
@@ -14,7 +18,6 @@ import {
   fetchStoredTasksPage,
   toggleStoredTask,
 } from "./storage";
-import type { TaskFilter } from "./types";
 
 function jsonResponse(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -66,17 +69,16 @@ function getTaskIdFromDeletePath(pathname: string) {
   return match?.[1] ?? null;
 }
 
-function getTaskListQuery(searchParams: URLSearchParams) {
-  const rawFilter = searchParams.get("filter");
-  const filter: TaskFilter =
-    rawFilter === "active" || rawFilter === "completed" ? rawFilter : "all";
+function readJsonBody(rawBody: string | undefined) {
+  if (!rawBody) {
+    return {};
+  }
 
-  return {
-    page: Number.parseInt(searchParams.get("page") ?? "1", 10) || 1,
-    pageSize: Number.parseInt(searchParams.get("pageSize") ?? "5", 10) || 5,
-    search: searchParams.get("search") ?? "",
-    filter,
-  };
+  try {
+    return JSON.parse(rawBody) as unknown;
+  } catch {
+    throw new Error("Request body must be valid JSON");
+  }
 }
 
 const tasksCollectionPath = `${apiConfig.baseUrl}${tasksApiConfig.resourcePath}`;
@@ -89,15 +91,20 @@ export async function taskApiFetch(input: RequestInfo | URL, init?: RequestInit)
 
   try {
     if (pathname === tasksCollectionPath && method === "GET") {
-      const taskPage = await fetchStoredTasksPage(getTaskListQuery(requestUrl.searchParams));
+      const taskPage = await fetchStoredTasksPage(
+        parseTaskListQuery({
+          page: requestUrl.searchParams.get("page") ?? undefined,
+          pageSize: requestUrl.searchParams.get("pageSize") ?? undefined,
+          search: requestUrl.searchParams.get("search") ?? undefined,
+          filter: requestUrl.searchParams.get("filter") ?? undefined,
+        }),
+      );
       return jsonResponse(toTaskPageDto(taskPage));
     }
 
     if (pathname === tasksCollectionPath && method === "POST") {
       const rawBody = await getRequestBody(input, init);
-      const payload = rawBody
-        ? (JSON.parse(rawBody) as CreateTaskRequestDto)
-        : { title: "" };
+      const payload = parseCreateTaskRequestDto(readJsonBody(rawBody));
       const task = await createStoredTask(payload.title);
       return jsonResponse(toTaskDto(task), 201);
     }
@@ -125,7 +132,9 @@ export async function taskApiFetch(input: RequestInfo | URL, init?: RequestInit)
 
     return jsonResponse(toApiErrorPayload("Route not found", "ROUTE_NOT_FOUND"), 404);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Task request failed";
-    return jsonResponse(toApiErrorPayload(message), 400);
+    return jsonResponse(
+      toApiErrorPayloadFromUnknown(error, "Task request failed"),
+      400,
+    );
   }
 }
