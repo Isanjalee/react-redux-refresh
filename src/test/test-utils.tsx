@@ -4,6 +4,7 @@ import { Provider } from "react-redux";
 import { render } from "@testing-library/react";
 import { createAppStore } from "../app/store";
 import type { AppStore, RootState } from "../app/store";
+import { TelemetryProvider } from "../shared/telemetry/TelemetryProvider";
 
 type RenderOptions = {
   preloadedState?: Partial<RootState>;
@@ -22,7 +23,9 @@ export function renderWithProviders(
   function Wrapper({ children }: PropsWithChildren) {
     return (
       <Provider store={store}>
-        <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
+        <TelemetryProvider>
+          <MemoryRouter initialEntries={[route]}>{children}</MemoryRouter>
+        </TelemetryProvider>
       </Provider>
     );
   }
