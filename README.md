@@ -46,6 +46,7 @@ This repository is used to practice:
 - API-focused error handling
 - Runtime schema validation
 - Form and API contract safety
+- Observability and monitoring UX
 
 ## Project Structure
 
@@ -208,6 +209,15 @@ src/
 - Centralized schema-driven error handling
 - Stronger boundaries between transport data and UI state
 
+### Day 12
+
+- Client-side error boundaries
+- Operational logging for user flows
+- Lightweight telemetry hooks
+- Safe error surfaces for async UI
+- Non-blocking failure notifications
+- Debug-friendly diagnostics panels
+
 ## Current Status
 
 - Day 1 complete
@@ -221,31 +231,32 @@ src/
 - Day 9 complete
 - Day 10 complete
 - Day 11 complete
+- Day 12 complete
 
-## Day 11 Goal
+## Day 12 Goal
 
-Harden the task app with runtime-safe frontend contracts by learning:
+Improve app observability and user-facing resiliency by learning:
 
-- schema validation for API data
-- schema validation for form input
-- query-param parsing through typed contracts
-- safe request and response transforms
-- centralized validation error handling
-- reducing trust in raw transport data
+- React error boundaries
+- safe error surfaces for async UI
+- lightweight client-side telemetry hooks
+- structured logging for user flows
+- diagnostics panels for debugging
+- how to keep failures visible without blocking productivity
 
-This day is focused on moving from compile-time-only confidence toward runtime-safe frontend architecture, where forms, query params, and API payloads are validated before they affect UI state.
+This day is focused on making the app behave like a production UI when unexpected failures happen, while keeping error information discoverable and useful.
 
-## Day 11 Commit Plan
+## Day 12 Commit Plan
 
-1. Add the Day 11 roadmap and goals to the docs
-2. Add shared task schemas for domain and transport data
-3. Validate query params through schema parsing
-4. Validate task form submissions before mutation triggers
-5. Validate API responses and normalize schema failures
-6. Refactor DTO and HTTP helpers around parsed contracts
-7. Improve validation-aware loading and error copy
-8. Add tests for invalid query, form, and response flows
-9. Extend the interview guide with schema-validation concepts
+1. Add the Day 12 roadmap and goals to the docs
+2. Add a shared error boundary component
+3. Add a lightweight telemetry logger and context
+4. Wrap core routes in error boundaries
+5. Capture async mutation and query failures in telemetry
+6. Add a diagnostics panel for recent errors
+7. Improve user-facing error surfaces and fallback UI
+8. Add tests for error boundary and telemetry flow
+9. Extend the interview guide with Day 12 observability concepts
 10. Regenerate the interview guide PDF
 
 ## Next Improvements
@@ -268,6 +279,8 @@ npm run build
 ## Purpose
 
 This project is part of a structured React refresh journey aimed at strengthening fundamentals and practicing the kinds of routing, state, testing, caching, pagination, and performance decisions used in production frontend applications.
+
+
 
 
 
