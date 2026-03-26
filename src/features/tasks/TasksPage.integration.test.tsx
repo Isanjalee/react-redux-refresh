@@ -1,4 +1,4 @@
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../test/test-utils";
@@ -163,7 +163,9 @@ describe("TasksPage integration", () => {
       name: "Write reducer tests",
     });
     await user.click(toggleCheckbox);
-    expect(await screen.findByRole("checkbox", { name: "Write reducer tests" })).toBeChecked();
+    await waitFor(() => {
+      expect(screen.getByRole("checkbox", { name: "Write reducer tests" })).toBeChecked();
+    });
 
     toggleTaskRequest.resolve({
       id: "t1",
@@ -220,5 +222,6 @@ describe("TasksPage integration", () => {
     expect(screen.getByDisplayValue("Mock")).toBeInTheDocument();
   });
 });
+
 
 
