@@ -14,6 +14,7 @@ import TasksQueryToolbar from "./components/TasksQueryToolbar";
 import Button from "../../shared/components/Button";
 import LoadingPanel from "../../shared/components/LoadingPanel";
 import RenderProfiler from "../../shared/components/RenderProfiler";
+import { useTelemetry } from "../../shared/telemetry/TelemetryProvider";
 import { normalizeApiError } from "../../shared/api/apiErrors";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import {
@@ -128,6 +129,7 @@ export default function TasksPage() {
   );
   const deferredQuery = useDeferredValue(query);
   const prefetchTasksPage = tasksApi.usePrefetch("getTasks");
+  const { logEvent } = useTelemetry();
   const isMutating = useAppSelector(selectIsTasksMutating);
   const taskErrors = useAppSelector(selectTaskErrors);
   const lastSyncedAt = useAppSelector(selectLastSyncedAt);
@@ -150,6 +152,18 @@ export default function TasksPage() {
       setSearchParams(buildSearchParams(query), { replace: true });
     }
   }, [hadCorrections, query, setSearchParams]);
+
+  useEffect(() => {
+    if (hadCorrections) {
+      logEvent({
+        type: "tasks.query.sanitized",
+        message: "Query parameters were sanitized to safe defaults",
+        severity: "warning",
+        source: "TasksPage",
+        details: { query },
+      });
+    }
+  }, [hadCorrections, logEvent, query]);
 
   useEffect(() => {
     if (taskPage) {
@@ -241,6 +255,28 @@ export default function TasksPage() {
   const queryError = isFetchError
     ? normalizeApiError(fetchError, "Task request failed")
     : null;
+  useEffect(() => {
+    if (queryError) {
+      logEvent({
+        type: "tasks.query.error",
+        message: queryError,
+        severity: "error",
+        source: "TasksPage",
+        details: { query },
+      });
+    }
+  }, [logEvent, query, queryError]);
+  useEffect(() => {
+    if (mutationError) {
+      logEvent({
+        type: "tasks.mutation.error",
+        message: mutationError,
+        severity: "error",
+        source: "TasksPage",
+        details: { lastMutation },
+      });
+    }
+  }, [lastMutation, logEvent, mutationError]);
   const error = mutationError ?? queryError;
   const showBlockingQueryError = Boolean(queryError && !taskPage);
   const emptyState = getEmptyStateCopy(query);
@@ -274,7 +310,7 @@ export default function TasksPage() {
           {showRefreshingState && (
             <div className="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-800">
               <span className="h-2 w-2 animate-pulse rounded-full bg-teal-500" />
-              Validating latest changes
+              Monitoring latest changes
             </div>
           )}
 
@@ -429,3 +465,6 @@ export default function TasksPage() {
     </div>
   );
 }
+
+
+
