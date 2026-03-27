@@ -20,7 +20,12 @@ export default function TaskList({
 }: Props) {
   if (tasks.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-10 text-center">
+      <div
+        className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-10 text-center"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
         <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
           Empty state
         </p>
@@ -33,7 +38,7 @@ export default function TaskList({
   }
 
   return (
-    <ul className="space-y-3" aria-label="Task list">
+    <ul className="space-y-3" aria-label="Task list" role="list">
       {tasks.map((task) => (
         <TaskItem
           key={task.id}
