@@ -293,22 +293,27 @@ export default function TasksPage() {
             Tasks Feature
           </p>
           <h2 className="mt-3 text-3xl font-bold text-slate-900">
-            React Refresh Tasks Workspace
+            Accessible Tasks Workspace
           </h2>
 
-          <p className="mt-3 text-sm text-slate-600">
+          <p className="mt-3 text-sm text-slate-600" role="status" aria-live="polite">
             Total: <b>{stats.total}</b> | Active: <b>{stats.active}</b> |
             Completed: <b>{stats.completed}</b>
           </p>
           <p className="mt-2 text-xs uppercase tracking-[0.2em] text-teal-700">
-            Day 11 architecture: runtime-safe query params, validated task contracts,
-            and schema-checked RTK Query boundaries
+            Day 13 accessibility: semantic structure, keyboard-first controls, and
+            inclusive feedback for every state
           </p>
         </div>
 
         <div className="flex flex-col gap-3 sm:items-end sm:pt-4">
           {showRefreshingState && (
-            <div className="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-800">
+            <div
+              className="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-teal-800"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            >
               <span className="h-2 w-2 animate-pulse rounded-full bg-teal-500" />
               Monitoring latest changes
             </div>
@@ -324,7 +329,11 @@ export default function TasksPage() {
         </div>
       </header>
 
-      <main className="mt-8 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+      <section
+        className="mt-8 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8"
+        aria-label="Tasks workspace"
+        aria-busy={isFetching || isMutating}
+      >
         <TaskForm onAdd={onAdd} disabled={isInteractionLocked} />
 
         <div className="mt-6">
@@ -339,7 +348,11 @@ export default function TasksPage() {
         </div>
 
         {hadCorrections && (
-          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
+          <div
+            className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800"
+            role="status"
+            aria-live="polite"
+          >
             Some invalid query parameters were reset to safe defaults for this view.
           </div>
         )}
@@ -367,7 +380,11 @@ export default function TasksPage() {
         </div>
 
         {error && !showBlockingQueryError && (
-          <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
+          <div
+            className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700"
+            role="alert"
+            aria-live="assertive"
+          >
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-red-700">
@@ -397,7 +414,11 @@ export default function TasksPage() {
               description="Loading the first page of the workspace and validating the active query contract."
             />
           ) : showBlockingQueryError ? (
-            <div className="rounded-3xl border border-red-200 bg-red-50 px-6 py-10 text-center">
+            <div
+              className="rounded-3xl border border-red-200 bg-red-50 px-6 py-10 text-center"
+              role="alert"
+              aria-live="assertive"
+            >
               <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-red-700">
                 Initial sync failed
               </p>
@@ -439,7 +460,7 @@ export default function TasksPage() {
             </>
           )}
         </div>
-      </main>
+      </section>
 
       <Suspense
         fallback={
