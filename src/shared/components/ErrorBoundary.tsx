@@ -33,7 +33,12 @@ class ErrorBoundaryBase extends Component<ErrorBoundaryProps, ErrorBoundaryState
     if (this.state.hasError) {
       return (
         this.props.fallback ?? (
-          <div className="rounded-[28px] border border-red-200 bg-red-50 px-6 py-10 text-center">
+          <div
+            className="rounded-[28px] border border-red-200 bg-red-50 px-6 py-10 text-center"
+            role="alert"
+            aria-live="assertive"
+            aria-atomic="true"
+          >
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-red-700">
               Something went wrong
             </p>

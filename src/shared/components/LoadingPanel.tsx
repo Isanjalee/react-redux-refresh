@@ -14,6 +14,10 @@ export default function LoadingPanel({
       className={`rounded-3xl border border-dashed border-slate-300 bg-slate-50/90 text-center ${
         compact ? "px-4 py-8" : "px-6 py-12"
       }`}
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+      aria-atomic="true"
     >
       <div className="mx-auto flex w-fit items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-teal-700 shadow-sm">
         <span className="h-2 w-2 animate-pulse rounded-full bg-teal-500" />
