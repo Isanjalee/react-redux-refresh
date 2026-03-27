@@ -47,6 +47,7 @@ This repository is used to practice:
 - Runtime schema validation
 - Form and API contract safety
 - Observability and monitoring UX
+- Accessibility and inclusive UX
 
 ## Project Structure
 
@@ -65,7 +66,9 @@ src/
 |       |   |-- TaskForm.tsx
 |       |   |-- TaskItem.tsx
 |       |   |-- TaskList.tsx
-|       |   `-- TasksInsightsPanel.tsx
+|       |   |-- TasksInsightsPanel.tsx
+|       |   |-- TasksPagination.tsx
+|       |   `-- TasksQueryToolbar.tsx
 |       |-- storage.ts
 |       |-- taskDtos.ts
 |       |-- tasksAdapter.ts
@@ -87,11 +90,15 @@ src/
 |   |-- components/
 |   |   |-- AppShell.tsx
 |   |   |-- Button.tsx
+|   |   |-- DiagnosticsPanel.tsx
+|   |   |-- ErrorBoundary.tsx
 |   |   |-- LoadingPanel.tsx
 |   |   |-- PageLoader.tsx
 |   |   `-- RenderProfiler.tsx
-|   `-- hooks/
-|       `-- useLocalStorageState.ts
+|   |-- hooks/
+|   |   `-- useLocalStorageState.ts
+|   `-- telemetry/
+|       `-- TelemetryProvider.tsx
 |-- test/
 |   |-- setup.ts
 |   `-- test-utils.tsx
@@ -218,6 +225,14 @@ src/
 - Non-blocking failure notifications
 - Debug-friendly diagnostics panels
 
+### Day 13
+
+- Semantic landmarks and labeling
+- Keyboard-first interaction support
+- Accessible form validation states
+- ARIA live regions for async updates
+- Inclusive status, loading, and error feedback
+
 ## Current Status
 
 - Day 1 complete
@@ -232,31 +247,32 @@ src/
 - Day 10 complete
 - Day 11 complete
 - Day 12 complete
+- Day 13 complete
 
-## Day 12 Goal
+## Day 13 Goal
 
-Improve app observability and user-facing resiliency by learning:
+Improve app accessibility and inclusive UX by learning:
 
-- React error boundaries
-- safe error surfaces for async UI
-- lightweight client-side telemetry hooks
-- structured logging for user flows
-- diagnostics panels for debugging
-- how to keep failures visible without blocking productivity
+- semantic HTML landmarks and labels
+- keyboard-friendly interactive controls
+- ARIA live regions for async updates
+- accessible form validation messaging
+- loading and error announcements
+- focus visibility and skip-link support
 
-This day is focused on making the app behave like a production UI when unexpected failures happen, while keeping error information discoverable and useful.
+This day is focused on making the app usable for keyboard and screen reader users without sacrificing the existing product polish.
 
-## Day 12 Commit Plan
+## Day 13 Commit Plan
 
-1. Add the Day 12 roadmap and goals to the docs
-2. Add a shared error boundary component
-3. Add a lightweight telemetry logger and context
-4. Wrap core routes in error boundaries
-5. Capture async mutation and query failures in telemetry
-6. Add a diagnostics panel for recent errors
-7. Improve user-facing error surfaces and fallback UI
-8. Add tests for error boundary and telemetry flow
-9. Extend the interview guide with Day 12 observability concepts
+1. Add Day 13 roadmap and accessibility goals to the docs
+2. Add semantic landmarks and skip-link navigation
+3. Improve form labeling and validation announcements
+4. Add ARIA live regions for async query and mutation status
+5. Make list, filter, and pagination controls accessible
+6. Add focus visibility styles and keyboard affordances
+7. Tune loading and error panels for screen readers
+8. Update integration tests for new accessibility labels
+9. Extend the interview guide with Day 13 accessibility concepts
 10. Regenerate the interview guide PDF
 
 ## Next Improvements
