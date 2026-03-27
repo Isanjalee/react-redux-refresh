@@ -1,3 +1,4 @@
+import { useId } from "react";
 import TaskFilters from "./TaskFilters";
 import Button from "../../../shared/components/Button";
 import type { TaskFilter } from "../types";
@@ -19,17 +20,24 @@ export default function TasksQueryToolbar({
   onSearchChange,
   onReset,
 }: Props) {
+  const searchId = useId();
+
   return (
-    <section className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+    <section
+      className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4"
+      role="search"
+      aria-label="Task search and filters"
+    >
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="flex-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
             Query controls
           </p>
           <div className="mt-3 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-            <label className="block">
+            <label className="block" htmlFor={searchId}>
               <span className="text-sm font-medium text-slate-700">Search tasks</span>
               <input
+                id={searchId}
                 type="search"
                 value={search}
                 onChange={(event) => onSearchChange(event.target.value)}

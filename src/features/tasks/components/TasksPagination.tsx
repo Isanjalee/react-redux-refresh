@@ -21,13 +21,22 @@ export default function TasksPagination({
   const end = Math.min(page * pageSize, totalItems);
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm">
+    <section
+      className="rounded-2xl border border-slate-200 bg-white px-4 py-4 shadow-sm"
+      aria-label="Task pagination"
+      aria-busy={isFetching}
+    >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
             Pagination
           </p>
-          <p className="mt-2 text-sm text-slate-600">
+          <p
+            className="mt-2 text-sm text-slate-600"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             {totalItems === 0
               ? "No matching tasks in this query yet."
               : `Showing ${start}-${end} of ${totalItems} matching tasks.`}
@@ -40,6 +49,7 @@ export default function TasksPagination({
             variant="secondary"
             onClick={() => onPageChange(page - 1)}
             disabled={page <= 1 || isFetching}
+            aria-label="Previous page"
           >
             Previous
           </Button>
@@ -51,6 +61,7 @@ export default function TasksPagination({
             variant="secondary"
             onClick={() => onPageChange(page + 1)}
             disabled={page >= totalPages || isFetching}
+            aria-label="Next page"
           >
             Next
           </Button>
