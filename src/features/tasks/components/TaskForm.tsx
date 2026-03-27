@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import Button from "../../../shared/components/Button";
 import { formatSchemaError } from "../../../shared/api/apiErrors";
 import { safeParseTaskTitle } from "../taskSchemas";
@@ -11,6 +11,8 @@ type Props = {
 export default function TaskForm({ onAdd, disabled = false }: Props) {
   const [title, setTitle] = useState("");
   const [touched, setTouched] = useState(false);
+  const inputId = useId();
+  const errorId = `${inputId}-error`;
 
   const parsedTitle = useMemo(() => safeParseTaskTitle(title), [title]);
   const validationMessage =
@@ -34,14 +36,20 @@ export default function TaskForm({ onAdd, disabled = false }: Props) {
   return (
     <form onSubmit={submit} className="flex gap-3">
       <div className="flex-1">
+        <label htmlFor={inputId} className="text-sm font-medium text-slate-700">
+          Task title
+        </label>
         <input
+          id={inputId}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={() => setTouched(true)}
           disabled={disabled}
           placeholder="Add a task..."
+          aria-required="true"
           aria-invalid={Boolean(validationMessage)}
-          className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition ${
+          aria-describedby={validationMessage ? errorId : undefined}
+          className={`mt-2 w-full rounded-xl border px-4 py-3 text-sm outline-none transition ${
             validationMessage
               ? "border-red-400 focus:border-red-500"
               : "border-gray-300 focus:border-black"
@@ -49,7 +57,9 @@ export default function TaskForm({ onAdd, disabled = false }: Props) {
         />
 
         {validationMessage && (
-          <p className="mt-2 text-xs text-red-600">{validationMessage}</p>
+          <p id={errorId} role="alert" className="mt-2 text-xs text-red-600">
+            {validationMessage}
+          </p>
         )}
       </div>
 
