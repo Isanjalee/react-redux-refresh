@@ -138,17 +138,17 @@ describe("TasksPage integration", () => {
     expect(await screen.findByText("Write reducer tests")).toBeInTheDocument();
     expect(screen.getByText("Page 1 of 2")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Next" }));
+    await user.click(screen.getByRole("button", { name: "Next page" }));
 
     expect(await screen.findByText("Review paginated API shape")).toBeInTheDocument();
     expect(screen.getByText("Page 2 of 2")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Previous" }));
+    await user.click(screen.getByRole("button", { name: "Previous page" }));
 
     expect(await screen.findByText("Write reducer tests")).toBeInTheDocument();
     expect(screen.getByText("Page 1 of 2")).toBeInTheDocument();
 
-    await user.type(screen.getByPlaceholderText("Add a task..."), "Ship Day 11");
+    await user.type(screen.getByLabelText("Task title"), "Ship Day 11");
     await user.click(screen.getByRole("button", { name: "Add" }));
 
     expect(await screen.findByText("Ship Day 11")).toBeInTheDocument();
@@ -174,17 +174,14 @@ describe("TasksPage integration", () => {
       createdAt: 800,
     });
 
-    const writeReducerLabel = screen.getByText("Write reducer tests").closest("label");
-    if (!writeReducerLabel) {
-      throw new Error("Expected task row to exist");
-    }
-
-    const writeReducerRow = writeReducerLabel.closest("li");
+    const writeReducerRow = screen
+      .getByRole("checkbox", { name: "Write reducer tests" })
+      .closest("li");
     if (!writeReducerRow) {
       throw new Error("Expected list row to exist");
     }
 
-    await user.click(within(writeReducerRow).getByRole("button", { name: "Delete" }));
+    await user.click(within(writeReducerRow).getByRole("button", { name: /Delete/ }));
 
     deleteTaskRequest.resolve("t1");
   });

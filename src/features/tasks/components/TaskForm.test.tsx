@@ -14,6 +14,7 @@ describe("TaskForm", () => {
     await user.click(screen.getByRole("button", { name: "Add" }));
 
     expect(screen.getByText("Task title cannot be empty")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toBeInTheDocument();
     expect(onAdd).not.toHaveBeenCalled();
   });
 
@@ -23,7 +24,7 @@ describe("TaskForm", () => {
 
     renderWithProviders(<TaskForm onAdd={onAdd} />);
 
-    const input = screen.getByPlaceholderText("Add a task...");
+    const input = screen.getByLabelText("Task title");
     await user.type(input, "x".repeat(121));
     await user.click(screen.getByRole("button", { name: "Add" }));
 
@@ -39,7 +40,7 @@ describe("TaskForm", () => {
 
     renderWithProviders(<TaskForm onAdd={onAdd} />);
 
-    const input = screen.getByPlaceholderText("Add a task...");
+    const input = screen.getByLabelText("Task title");
 
     await user.type(input, "  Ship Day 11 contracts  ");
     await user.click(screen.getByRole("button", { name: "Add" }));
