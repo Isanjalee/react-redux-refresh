@@ -110,7 +110,13 @@ src/
 |-- docs/
 |   |-- interview-guide.html
 |   |-- interview-guide.pdf
-|   `-- architecture.md
+|   |-- architecture.md
+|   |-- architecture-decisions.md
+|   |-- architecture-diagram.mmd
+|   |-- code-splitting.md
+|   |-- dependency-flow.md
+|   |-- performance-strategy.md
+|   `-- state-strategy.md
 `-- main.tsx
 ```
 
@@ -294,6 +300,13 @@ This day is focused on documenting and reinforcing architectural boundaries that
 ## Architecture Notes
 
 See `docs/architecture.md` for the Day 14 architecture diagram and decision log.
+Additional references:
+- `docs/architecture-decisions.md`
+- `docs/architecture-diagram.mmd`
+- `docs/state-strategy.md`
+- `docs/dependency-flow.md`
+- `docs/code-splitting.md`
+- `docs/performance-strategy.md`
 
 ## Next Improvements
 

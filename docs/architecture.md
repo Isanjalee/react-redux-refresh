@@ -85,3 +85,9 @@ src/
 |   |-- components/      # shared UI components
 |   `-- telemetry/       # observability infra
 ```
+
+## When To Revisit Decisions
+
+- If a screen grows beyond a single feature, consider introducing a new feature module.
+- If a UI component starts importing DTOs or API helpers, move the mapping into services.
+- If pagination and filtering logic spreads into multiple files, centralize it in the state layer.

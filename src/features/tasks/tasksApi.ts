@@ -14,7 +14,7 @@ import {
   mapDeleteTaskResponse,
   mapTaskDto,
   mapTaskPageDto,
-} from "./services/tasksService";
+} from "./services";
 import type { TaskDto, TaskPageDto } from "./taskDtos";
 import type { Task, TaskListQuery, TaskPage } from "./types";
 
