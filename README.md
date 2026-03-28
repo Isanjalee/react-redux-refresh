@@ -48,6 +48,7 @@ This repository is used to practice:
 - Form and API contract safety
 - Observability and monitoring UX
 - Accessibility and inclusive UX
+- Architecture strategy and system design thinking
 
 ## Project Structure
 
@@ -69,6 +70,8 @@ src/
 |       |   |-- TasksInsightsPanel.tsx
 |       |   |-- TasksPagination.tsx
 |       |   `-- TasksQueryToolbar.tsx
+|       |-- services/
+|       |   `-- tasksService.ts
 |       |-- storage.ts
 |       |-- taskDtos.ts
 |       |-- tasksAdapter.ts
@@ -104,6 +107,10 @@ src/
 |   `-- test-utils.tsx
 |-- index.css
 |-- vite-env.d.ts
+|-- docs/
+|   |-- interview-guide.html
+|   |-- interview-guide.pdf
+|   `-- architecture.md
 `-- main.tsx
 ```
 
@@ -233,6 +240,15 @@ src/
 - ARIA live regions for async updates
 - Inclusive status, loading, and error feedback
 
+### Day 14
+
+- State strategy for Redux vs RTK Query vs local state
+- Layered frontend architecture boundaries
+- Dependency flow rules between UI, features, and services
+- Code splitting strategy guidance
+- Performance strategy and profiling considerations
+- Architecture decision documentation
+
 ## Current Status
 
 - Day 1 complete
@@ -248,32 +264,36 @@ src/
 - Day 11 complete
 - Day 12 complete
 - Day 13 complete
+- Day 14 complete
 
-## Day 13 Goal
+## Day 14 Goal
 
-Improve app accessibility and inclusive UX by learning:
+Move from feature implementation to system design thinking by learning:
 
-- semantic HTML landmarks and labels
-- keyboard-friendly interactive controls
-- ARIA live regions for async updates
-- accessible form validation messaging
-- loading and error announcements
-- focus visibility and skip-link support
+- state strategy (Redux vs RTK Query vs local state)
+- layered architecture and dependency flow
+- code splitting strategies
+- performance and caching strategies
+- documenting architecture decisions
 
-This day is focused on making the app usable for keyboard and screen reader users without sacrificing the existing product polish.
+This day is focused on documenting and reinforcing architectural boundaries that scale to larger apps.
 
-## Day 13 Commit Plan
+## Day 14 Commit Plan
 
-1. Add Day 13 roadmap and accessibility goals to the docs
-2. Add semantic landmarks and skip-link navigation
-3. Improve form labeling and validation announcements
-4. Add ARIA live regions for async query and mutation status
-5. Make list, filter, and pagination controls accessible
-6. Add focus visibility styles and keyboard affordances
-7. Tune loading and error panels for screen readers
-8. Update integration tests for new accessibility labels
-9. Extend the interview guide with Day 13 accessibility concepts
+1. Add Day 14 roadmap and architecture goals to the docs
+2. Document the layered architecture model
+3. Record state strategy (Redux vs RTK Query vs local)
+4. Clarify dependency flow rules between layers
+5. Document code splitting strategy
+6. Capture performance strategy and profiling triggers
+7. Separate a tasks service layer from the RTK Query slice
+8. Update README structure and architecture notes
+9. Extend the interview guide with Day 14 architecture concepts
 10. Regenerate the interview guide PDF
+
+## Architecture Notes
+
+See `docs/architecture.md` for the Day 14 architecture diagram and decision log.
 
 ## Next Improvements
 
