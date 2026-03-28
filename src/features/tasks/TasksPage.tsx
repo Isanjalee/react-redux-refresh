@@ -301,8 +301,7 @@ export default function TasksPage() {
             Completed: <b>{stats.completed}</b>
           </p>
           <p className="mt-2 text-xs uppercase tracking-[0.2em] text-teal-700">
-            Day 13 accessibility: semantic structure, keyboard-first controls, and
-            inclusive feedback for every state
+            Day 14 architecture: state strategy, layering, and dependency flow
           </p>
         </div>
 
