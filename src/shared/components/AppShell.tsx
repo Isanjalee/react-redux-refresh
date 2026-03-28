@@ -16,11 +16,11 @@ export default function AppShell({ children }: PropsWithChildren) {
                 React Redux Refresh
               </p>
               <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-                Day 13 Accessibility and Inclusive UX
+                Day 14 Advanced Frontend Architecture
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-                We are making the task app more usable with better semantics, keyboard flow,
-                and screen-reader-friendly feedback for every state.
+                We are documenting and refining architecture decisions, layering, and
+                dependency flow for long-term scale.
               </p>
             </div>
 
@@ -28,7 +28,7 @@ export default function AppShell({ children }: PropsWithChildren) {
               <div className="rounded-2xl border border-teal-100 bg-teal-50 px-4 py-3 text-sm text-teal-900 shadow-sm">
                 <p className="font-semibold">Phase focus</p>
                 <p className="mt-1 text-teal-800">
-                  Semantics, focus management, and accessible feedback
+                  State strategy, layering, and system design
                 </p>
               </div>
               <DiagnosticsPanel />
