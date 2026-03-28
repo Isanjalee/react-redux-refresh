@@ -2,20 +2,20 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { resolveApiBaseUrl, tasksApiConfig } from "../../shared/api/apiConfig";
 import { toApiErrorPayloadFromUnknown } from "../../shared/api/apiErrors";
 import { makeId, matchesTaskQuery, normalizeTaskListQuery } from "./taskUtils";
-import {
-  fromClearCompletedResponseDto,
-  fromDeleteTaskResponseDto,
-  toCreateTaskRequestDto,
-  toTask,
-  toTaskPage,
-  toTaskPageRequestDto,
-  type ClearCompletedResponseDto,
-  type DeleteTaskResponseDto,
-  type TaskDto,
-  type TaskPageDto,
-} from "./taskDtos";
 import { taskApiFetch } from "./tasksHttp";
 import { parseTaskListQuery, safeParseTaskTitle } from "./taskSchemas";
+import {
+  buildAddTaskRequest,
+  buildClearCompletedRequest,
+  buildDeleteTaskRequest,
+  buildTasksQuery,
+  buildToggleTaskRequest,
+  mapClearCompletedResponse,
+  mapDeleteTaskResponse,
+  mapTaskDto,
+  mapTaskPageDto,
+} from "./services/tasksService";
+import type { TaskDto, TaskPageDto } from "./taskDtos";
 import type { Task, TaskListQuery, TaskPage } from "./types";
 
 function createOptimisticTask(title: string): Task {
@@ -131,15 +131,8 @@ export const tasksApi = createApi({
   tagTypes: [tasksApiConfig.tagType],
   endpoints: (builder) => ({
     getTasks: builder.query<TaskPage, TaskListQuery>({
-      query: (query) => {
-        const safeQuery = parseTaskListQuery(normalizeTaskListQuery(query));
-
-        return {
-          url: tasksApiConfig.resourcePath,
-          params: toTaskPageRequestDto(safeQuery),
-        };
-      },
-      transformResponse: (response: TaskPageDto) => toTaskPage(response),
+      query: (query) => buildTasksQuery(query),
+      transformResponse: (response: TaskPageDto) => mapTaskPageDto(response),
       providesTags: (result) =>
         result
           ? [
@@ -154,17 +147,13 @@ export const tasksApi = createApi({
     addTask: builder.mutation<Task, AddTaskArg>({
       async queryFn({ title }, _api, _extraOptions, fetchWithBQ) {
         try {
-          const response = await fetchWithBQ({
-            url: tasksApiConfig.resourcePath,
-            method: "POST",
-            body: toCreateTaskRequestDto(title),
-          });
+          const response = await fetchWithBQ(buildAddTaskRequest(title));
 
           if (response.error) {
             return { error: response.error };
           }
 
-          return { data: toTask(response.data as TaskDto) };
+          return { data: mapTaskDto(response.data as TaskDto) };
         } catch (error) {
           return {
             error: {
@@ -215,11 +204,8 @@ export const tasksApi = createApi({
       invalidatesTags: [{ type: tasksApiConfig.tagType, id: "LIST" }],
     }),
     toggleTask: builder.mutation<Task, ToggleTaskArg>({
-      query: ({ id }) => ({
-        url: `${tasksApiConfig.resourcePath}/${id}/toggle`,
-        method: "PATCH",
-      }),
-      transformResponse: (response: TaskDto) => toTask(response),
+      query: ({ id }) => buildToggleTaskRequest(id),
+      transformResponse: (response: TaskDto) => mapTaskDto(response),
       async onQueryStarted({ id, view }, { dispatch, queryFulfilled }) {
         const safeView = parseTaskListQuery(view);
         const patchResult = dispatch(
@@ -248,12 +234,8 @@ export const tasksApi = createApi({
       ],
     }),
     deleteTask: builder.mutation<string, DeleteTaskArg>({
-      query: ({ id }) => ({
-        url: `${tasksApiConfig.resourcePath}/${id}`,
-        method: "DELETE",
-      }),
-      transformResponse: (response: DeleteTaskResponseDto) =>
-        fromDeleteTaskResponseDto(response),
+      query: ({ id }) => buildDeleteTaskRequest(id),
+      transformResponse: (response) => mapDeleteTaskResponse(response),
       async onQueryStarted({ id, view }, { dispatch, queryFulfilled }) {
         const safeView = parseTaskListQuery(view);
         const patchResult = dispatch(
@@ -274,12 +256,8 @@ export const tasksApi = createApi({
       ],
     }),
     clearCompleted: builder.mutation<string[], void>({
-      query: () => ({
-        url: `${tasksApiConfig.resourcePath}/clear-completed`,
-        method: "POST",
-      }),
-      transformResponse: (response: ClearCompletedResponseDto) =>
-        fromClearCompletedResponseDto(response),
+      query: () => buildClearCompletedRequest(),
+      transformResponse: (response) => mapClearCompletedResponse(response),
       invalidatesTags: [{ type: tasksApiConfig.tagType, id: "LIST" }],
     }),
   }),
